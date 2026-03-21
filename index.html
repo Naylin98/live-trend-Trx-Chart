@@ -3,188 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRX Pro - TradingView Style</title>
+    <title>TRX Live - Fixed Scale UI</title>
     
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <style>
-        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: #0c1017; display: flex; justify-content: center; padding: 10px; color: #d1d4dc; margin: 0; }
-        .container { background: #131722; padding: 20px; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); width: 100%; max-width: 1200px; border: 1px solid #363c4e; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #363c4e; padding-bottom: 10px; }
-        .title { color: #d1d4dc; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-        .live-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        .timer-box { background: #1e222d; padding: 5px 15px; border-radius: 4px; border: 1px solid #363c4e; color: #f1c40f; font-family: monospace; font-size: 16px; }
-
-        /* Chart Section */
-        #chart-wrapper { background: #131722; border-radius: 4px; position: relative; min-height: 450px; }
-        
-        /* Modern Table Styling */
-        .data-table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 13px; }
-        .data-table th { text-align: left; padding: 10px; color: #787b86; border-bottom: 1px solid #363c4e; text-transform: uppercase; }
-        .data-table td { padding: 8px 10px; border-bottom: 1px solid #1e222d; }
-        
-        .win { color: #26a69a; font-weight: bold; }
-        .loss { color: #ef5350; font-weight: bold; }
-        .type-b { color: #ff9800; }
-        .type-s { color: #2196f3; }
-
-        /* Apex Customizations */
-        .apexcharts-canvas { margin: 0 auto; }
-        .apexcharts-tooltip { background: #1e222d !important; border: 1px solid #363c4e !important; color: #d1d4dc !important; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; display: flex; justify-content: center; padding: 10px; color: #f8fafc; overflow-x: hidden; margin: 0; }
+        .container { background: #1e293b; padding: 20px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; width: 100%; max-width: 1150px; border: 1px solid #334155; }
+        .header { position: relative; text-align: center; color: #f1c40f; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+        .timer-box { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.5); padding: 4px 12px; border-radius: 8px; border: 1px solid #f1c40f; display: flex; flex-direction: column; align-items: center; min-width: 50px; }
+        #timer-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; margin-bottom: -2px; }
+        #countdown { font-size: 16px; font-weight: bold; color: #f1c40f; font-family: monospace; }
+        .pred-alert-box { position: absolute; right: 85px; top: 50%; transform: translateY(-50%); font-size: 22px; font-weight: 900; padding: 6px 14px; border-radius: 8px; display: none; letter-spacing: 2px; z-index: 1000; }
+        .alert-big { display: block; color: #22c55e; border: 3px solid #22c55e; background: rgba(34, 197, 94, 0.1); animation: big-flash 1.7s infinite; }
+        .alert-small { display: block; color: #ef4444; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.1); animation: small-flash 1.7s infinite; }
+        @keyframes big-flash { 0%, 100% { box-shadow: 0 0 5px #22c55e; opacity: 1; border-color: #22c55e; } 50% { box-shadow: 0 0 20px #22c55e; opacity: 0.6; border-color: transparent; } }
+        @keyframes small-flash { 0%, 100% { box-shadow: 0 0 5px #ef4444; opacity: 1; border-color: #ef4444; } 50% { box-shadow: 0 0 20px #ef4444; opacity: 0.6; border-color: transparent; } }
+        .dashboard-labels { display: flex; align-items: center; background: #1e293b; padding: 12px 0; border-bottom: 2px solid #334155; font-size: 13px; font-weight: bold; color: #f1c40f; text-transform: uppercase; position: sticky; top: 0; z-index: 100; }
+        .lbl-trx { width: 130px; text-align: center; }
+        .lbl-trend { width: 350px; text-align: center; }
+        .lbl-side { display: flex; flex-grow: 1; padding-left: 15px; gap: 5px; align-items: center; }
+        .row-grid { display: flex; align-items: center; height: 45px; border-bottom: 1px solid #334155; position: relative; z-index: 5; }
+        #chartData .row-grid:nth-child(10) { background: rgba(248, 250, 252, 0.08); border-left: 3px solid #f1c40f; }
+        .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
+        .cells { display: flex; flex: 0 0 auto; width: 350px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
+        .cell { width: 26px; height: 26px; line-height: 26px; text-align: center; font-weight: bold; color: #475569; font-size: 14px; border-radius: 50%; z-index: 10; background: rgba(255,255,255,0.05); }
+        .active-green { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .active-red { background-color: #ef4444 !important; color: white !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+        .active-purple { background-color: #a855f7 !important; color: white !important; box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+        .side-info { display: flex; align-items: center; flex-grow: 1; padding-left: 15px; border-left: 1px solid #334155; gap: 5px; }
+        .text-s { width: 35px; font-weight: bold; color: #3498db; text-align: center; }
+        .text-b { width: 35px; font-weight: bold; color: #e67e22; text-align: center; }
+        .extra-text { width: 150px; font-size: 12px; color: #cbd5e1; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pred-text { width: 45px; color: #f1c40f; font-weight: bold; text-align: center; background: rgba(241, 196, 15, 0.1); border-radius: 4px; }
+        @keyframes win-blink { 0%, 100% { background: rgba(34, 197, 94, 0.15); opacity: 1; } 50% { background: rgba(34, 197, 94, 0.5); opacity: 0.7; } }
+        @keyframes loss-blink { 0%, 100% { background: rgba(239, 68, 68, 0.15); opacity: 1; } 50% { background: rgba(239, 68, 68, 0.5); opacity: 0.7; } }
+        .win-text { color: #22c55e; background: rgba(34, 197, 94, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: win-blink 1.5s infinite; }
+        .loss-text { color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: loss-blink 1.5s infinite; }
+        canvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1; }
+        #candleContainer { margin-top: 20px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 10px; border: 1px solid #334155; position: relative; overflow: hidden; }
+        #chartHeader { color: #f1c40f; font-size: 13px; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); margin-bottom: 10px; }
+        #apexCandleChart { width: 100%; height: 350px; }
+        .apexcharts-toolbar { top: -35px !important; right: 10px !important; }
+        .apexcharts-menu-icon, .apexcharts-zoom-icon, .apexcharts-zoomin-icon, .apexcharts-zoomout-icon, .apexcharts-reset-icon, .apexcharts-pan-icon { transform: scale(0.8); filter: invert(1) sepia(1) saturate(5) hue-rotate(15deg); }
+        .footer-info { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-top: 20px; border-top: 1px solid #334155; padding-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="chartBox">
     <div class="header">
-        <div class="title"><div class="live-dot"></div> TRX/USD MODERN CHART</div>
-        <div id="bigSmallAlert" style="font-weight: bold; font-size: 20px;"></div>
-        <div class="timer-box">NEXT: <span id="countdown">60s</span></div>
+        TRX MW MODERN TREND (LIVE)
+        <div id="bigSmallAlert" class="pred-alert-box"></div>
+        <div class="timer-box">
+            <span id="timer-label">Next</span>
+            <div id="countdown">60s</div>
+        </div>
+    </div>
+    
+    <div class="dashboard-labels">
+        <div class="lbl-trx">TRX ISSUE</div>
+        <div class="lbl-trend">TREND LINE</div>
+        <div class="lbl-side">
+            <span style="width:35px;">B/S</span>
+            <span style="width:150px;">MW STRATEGY</span>
+            <span style="width:45px;">PRED</span>
+            <span style="width:70px;">RESULT</span>
+            <span style="flex-grow:1; text-align: right; padding-right:15px;">WIN RATE</span>
+        </div>
     </div>
 
-    <div id="chart-wrapper">
-        <div id="main-candle-chart"></div>
+    <canvas id="lineCanvas"></canvas>
+    <div id="chartData">
+        <div style="text-align: center; padding: 40px; color: #94a3b8;"> Loading Live Data...</div>
     </div>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Issue</th>
-                <th>Result</th>
-                <th>Side</th>
-                <th>Prediction</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="table-body">
-            </tbody>
-    </table>
+    <div id="candleContainer">
+        <div id="chartHeader">
+            <span style="display:inline-block; width:8px; height:8px; background:#f1c40f; border-radius:50%;"></span>
+            TRX MW FX-STYLE TREND (B S)
+        </div>
+        <div id="apexCandleChart"></div>
+    </div>
+    
+    <div class="footer-info">
+        <div id="connection-status"> Initializing...</div>
+        <div id="last-update">Last Update: --:--:--</div>
+    </div>
 </div>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtHjuZ50vMa6S3WN3pyW2eF5qXH5tM8Obyry3sQcrQJ6-2e87aN1BR62f-q8lZ1I53/exec"; 
     let timeLeft = 60;
-    let chart = null;
+    let candleChart = null;
 
-    function fetchData() {
-        fetch(WEB_APP_URL + "?action=getRawData")
+    function loadTrendData() {
+        fetch(WEB_APP_URL + "?action=getRawData") 
             .then(res => res.json())
-            .then(data => {
-                updateUI(data);
-                renderChart(data);
+            .then(rawData => {
+                if (rawData && rawData.length > 0) {
+                    const displayData = rawData.slice().reverse();
+                    renderModernChart(displayData); 
+                    renderApexCandleChart(rawData); 
+
+                    const alertBox = document.getElementById('bigSmallAlert');
+                    const latestPred = displayData[0].prediction ? displayData[0].prediction.toString().toUpperCase() : "";
+                    alertBox.className = "pred-alert-box"; 
+                    if (latestPred.endsWith('B')) {
+                        alertBox.innerText = "BIG"; alertBox.classList.add('alert-big');
+                    } else if (latestPred.endsWith('S')) {
+                        alertBox.innerText = "SMALL"; alertBox.classList.add('alert-small');
+                    } else { alertBox.style.display = "none"; }
+
+                    document.getElementById('last-update').innerText = "Last Update: " + new Date().toLocaleTimeString();
+                    const conn = document.getElementById('connection-status');
+                    conn.innerText = " Connected (Live)";
+                    conn.style.color = "#22c55e";
+                }
             });
     }
 
-    function updateUI(data) {
-        const tbody = document.getElementById('table-body');
-        const alertBox = document.getElementById('bigSmallAlert');
-        const latest = data[0];
-        
-        // Alert Logic
-        if(latest.prediction) {
-            alertBox.innerText = latest.prediction.includes('B') ? "SIGNAL: BIG" : "SIGNAL: SMALL";
-            alertBox.style.color = latest.prediction.includes('B') ? "#ff9800" : "#2196f3";
-        }
-
-        tbody.innerHTML = data.slice(0, 10).map(item => `
-            <tr>
-                <td>${item.label}</td>
-                <td><span style="background: ${getBg(item.digit)}; color:white; padding: 2px 8px; border-radius: 10px;">${item.digit}</span></td>
-                <td class="${item.type === 'B' ? 'type-b' : 'type-s'}">${item.type}</td>
-                <td>${item.prediction}</td>
-                <td class="${item.result === 'WIN' ? 'win' : 'loss'}">${item.result || 'PENDING'}</td>
-            </tr>
-        `).join('');
-    }
-
-    function getBg(d) {
-        if ([0, 5].includes(parseInt(d))) return "#a855f7";
-        if ([1, 3, 7, 9].includes(parseInt(d))) return "#22c55e";
-        return "#ef4444";
-    }
-
-    function renderChart(rawData) {
-        let currentPrice = 500;
-        const candleData = rawData.map((item, index) => {
-            const digit = parseInt(item.digit) || 0;
-            const type = (item.type || "B").toUpperCase();
-            let open = currentPrice;
-            currentPrice = (type === 'B') ? Math.min(open + (digit * 8), 950) : Math.max(open - (digit * 8), 50);
-            let close = currentPrice;
-            return {
-                x: new Date().getTime() - (rawData.length - index) * 60000,
-                y: [open, Math.max(open, close) + 2, Math.min(open, close) - 2, close]
-            };
-        });
-
-        if (chart) {
-            // TradingView Style Update: Series ကိုပဲ update လုပ်ပြီး zoom ကိုထိန်းထားတယ်
-            chart.updateSeries([{ data: candleData }], false);
-        } else {
-            const options = {
-                series: [{ data: candleData }],
-                chart: {
-                    type: 'candlestick',
-                    height: 450,
-                    background: '#131722',
-                    foreColor: '#787b86',
-                    fontFamily: 'Inter, sans-serif',
-                    animations: { enabled: false },
-                    toolbar: { show: true, tools: { pan: true, zoom: true, zoomin: true, zoomout: true, reset: true } }
-                },
-                plotOptions: {
-                    candlestick: {
-                        colors: { upward: '#26a69a', downward: '#ef5350' },
-                        wick: { useFillColor: true }
-                    }
-                },
-                grid: {
-                    borderColor: '#1e222d',
-                    xaxis: { lines: { show: true } },
-                    yaxis: { lines: { show: true } }
-                },
-                stroke: { width: 1 },
-                xaxis: { 
-                    type: 'datetime',
-                    axisBorder: { show: false },
-                    axisTicks: { show: false }
-                },
-                yaxis: {
-                    min: 0, max: 1000,
-                    opposite: true, // TradingView ပုံစံ ညာဘက်မှာ စျေးနှုန်းပြမယ်
-                    labels: { formatter: (val) => val.toFixed(0) }
-                },
-                tooltip: {
-                    enabled: true,
-                    theme: 'dark',
-                    custom: function({seriesIndex, dataPointIndex, w}) {
-                        const o = w.globals.seriesCandleO[seriesIndex][dataPointIndex];
-                        const h = w.globals.seriesCandleH[seriesIndex][dataPointIndex];
-                        const l = w.globals.seriesCandleL[seriesIndex][dataPointIndex];
-                        const c = w.globals.seriesCandleC[seriesIndex][dataPointIndex];
-                        return `<div style="padding:10px; background:#1e222d;">
-                            <div>O: ${o}</div><div>H: ${h}</div><div>L: ${l}</div><div>C: ${c}</div>
-                        </div>`;
-                    }
-                }
-            };
-            chart = new ApexCharts(document.querySelector("#main-candle-chart"), options);
-            chart.render();
-        }
-    }
-
     function startTimer() {
+        const timerDisplay = document.getElementById('countdown');
         setInterval(() => {
             timeLeft--;
-            document.getElementById('countdown').innerText = timeLeft + "s";
-            if (timeLeft <= 0) { timeLeft = 60; fetchData(); }
+            timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
+            if (timeLeft <= 0) { timeLeft = 60; loadTrendData(); }
         }, 1000);
     }
 
-    window.onload = () => { fetchData(); startTimer(); };
+    function getActiveClass(digit) {
+        const d = parseInt(digit);
+        if ([0, 5].includes(d)) return "active-purple";
+        if ([1, 3, 7, 9].includes(d)) return "active-green";
+        if ([2, 4, 6, 8].includes(d)) return "active-red";
+        return "";
+    }
+
+    function renderModernChart(displayData) {
+        const output = document.getElementById('chartData');
+        const container = document.getElementById('chartBox');
+        const canvas = document.getElementById('lineCanvas');
+        const ctx = canvas.getContext('2d');
+        output.innerHTML = ""; 
+
+        displayData.forEach((item, rIdx) => {
+            const digit = parseInt(item.digit);
+            const resultValue = (item.result || "").toString().trim().toUpperCase();
+            let resClass = (resultValue === "WIN") ? "win-text" : (resultValue === "LOSS" ? "loss-text" : "");
+            let winRateStr = item.strend || "0%";
+            if (!winRateStr.toString().includes("%")) winRateStr = (parseFloat(winRateStr) * 100).toFixed(2) + "%";
+
+            let digitsHtml = "";
+            for (let i = 0; i <= 9; i++) {
+                const highlight = (i === digit) ? getActiveClass(digit) : "";
+                digitsHtml += `<div class="cell ${highlight}" id="dot-${rIdx}-${i}">${i}</div>`;
+            }
+
+            output.innerHTML += `
+                <div class="row-grid">
+                    <div class="row-label">${item.label}</div>
+                    <div class="cells">${digitsHtml}</div>
+                    <div class="side-info">
+                        <div class="${item.type === 'B' ? 'text-b' : 'text-s'}">${item.type || ""}</div>
+                        <div class="extra-text">${item.extraData || ""}</div>
+                        <div class="pred-text">${item.prediction || ""}</div>
+                        <div class="${resClass}">${item.result || "---"}</div>
+                        <div style="flex-grow:1; text-align:right; padding-right:15px; color:#38bdf8; font-weight:bold;">${winRateStr}</div>
+                    </div>
+                </div>`;
+        });
+
+        setTimeout(() => {
+            canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "#ff4444"; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
+            ctx.beginPath();
+            let hasPoint = false;
+            displayData.forEach((item, i) => {
+                const el = document.getElementById(`dot-${i}-${parseInt(item.digit)}`);
+                if (el) {
+                    const r = el.getBoundingClientRect(), cr = container.getBoundingClientRect();
+                    const x = r.left - cr.left + (r.width/2), y = r.top - cr.top + (r.height/2);
+                    if (!hasPoint) { ctx.moveTo(x, y); hasPoint = true; } else ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+        }, 500);
+    }
+
+    function renderApexCandleChart(rawData) {
+        const chartElement = document.getElementById('apexCandleChart');
+        if (!chartElement) return;
+
+        // သင်ပေးထားတဲ့ digit ကို အခြေခံပြီး 0-1000 range ထဲရောက်အောင် scale ချဲ့လိုက်ပါတယ်
+        let currentPrice = 500; 
+        const candleData = rawData.map((item) => {
+            const digit = parseInt(item.digit) || 0;
+            const type = (item.type || "").toUpperCase();
+            let openPrice = currentPrice;
+            
+            // Digit အလိုက် ဈေးနှုန်းအတက်အကျကို သိသိသာသာဖြစ်အောင် 10 နဲ့ မြှောက်ထားပါတယ်
+            if (type === 'B') currentPrice = Math.min(currentPrice + (digit * 5), 980);
+            else currentPrice = Math.max(currentPrice - (digit * 5), 20);
+            
+            let closePrice = currentPrice;
+            let date = new Date().getTime() - (rawData.length - rawData.indexOf(item)) * 60000; 
+            return { x: date, y: [openPrice, openPrice + 5, closePrice - 5, closePrice] };
+        });
+
+        if (candleChart) {
+            // updateOptions ကိုသုံးပြီး data သစ်ထည့်မယ်၊ ဒါပေမယ့် zoom status ကိုထိန်းထားမယ်
+            candleChart.updateOptions({
+                series: [{ data: candleData }]
+            }, false, false, true); // true parameter က reset zoom မဖြစ်အောင် တားထားတာပါ
+        } else {
+            const options = {
+                series: [{ name: 'TRX Price', data: candleData }],
+                chart: {
+                    type: 'candlestick',
+                    height: 350,
+                    id: 'trx-candles',
+                    background: 'transparent',
+                    animations: { enabled: false },
+                    toolbar: { show: true, tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
+                    zoom: { enabled: true, type: 'x', autoScaleYaxis: false } // Y-axis ကို auto မချုံ့ခိုင်းတော့ပါ
+                },
+                plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' } } },
+                xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } } },
+                yaxis: {
+                    min: 0,
+                    max: 1000,
+                    tickAmount: 10,
+                    labels: { style: { colors: '#f1c40f' }, formatter: (val) => val.toFixed(0) }
+                },
+                grid: { borderColor: 'rgba(148, 163, 184, 0.1)' }
+            };
+            candleChart = new ApexCharts(chartElement, options);
+            candleChart.render();
+        }
+    }
+
+    window.onload = () => { loadTrendData(); startTimer(); };
 </script>
 </body>
 </html>
