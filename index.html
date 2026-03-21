@@ -193,56 +193,87 @@
     }
 
     function renderApexCandleChart(rawData) {
-        const chartElement = document.getElementById('apexCandleChart');
-        if (!chartElement) return;
+    const chartElement = document.getElementById('apexCandleChart');
+    if (!chartElement) return;
 
-        // သင်ပေးထားတဲ့ digit ကို အခြေခံပြီး 0-1000 range ထဲရောက်အောင် scale ချဲ့လိုက်ပါတယ်
-        let currentPrice = 500; 
-        const candleData = rawData.map((item) => {
-            const digit = parseInt(item.digit) || 0;
-            const type = (item.type || "").toUpperCase();
-            let openPrice = currentPrice;
-            
-            // Digit အလိုက် ဈေးနှုန်းအတက်အကျကို သိသိသာသာဖြစ်အောင် 10 နဲ့ မြှောက်ထားပါတယ်
-            if (type === 'B') currentPrice = Math.min(currentPrice + (digit * 5), 980);
-            else currentPrice = Math.max(currentPrice - (digit * 5), 20);
-            
-            let closePrice = currentPrice;
-            let date = new Date().getTime() - (rawData.length - rawData.indexOf(item)) * 60000; 
-            return { x: date, y: [openPrice, openPrice + 5, closePrice - 5, closePrice] };
-        });
+    // User သတ်မှတ်ချက်များ
+    let currentPrice = 10000; 
+    const bodySize = 0.02;
 
-        if (candleChart) {
-            // updateOptions ကိုသုံးပြီး data သစ်ထည့်မယ်၊ ဒါပေမယ့် zoom status ကိုထိန်းထားမယ်
-            candleChart.updateOptions({
-                series: [{ data: candleData }]
-            }, false, false, true); // true parameter က reset zoom မဖြစ်အောင် တားထားတာပါ
+    const candleData = rawData.map((item, index) => {
+        const digit = parseInt(item.digit) || 0;
+        const type = (item.type || "").toUpperCase();
+        
+        let open = currentPrice;
+        
+        // Digit ပေါ်မူတည်ပြီး ဈေးနှုန်းအတက်အကျကို တွက်ချက်ခြင်း
+        // အပြောင်းအလဲ = (Digit + 1) * bodySize
+        let priceChange = (digit + 1) * bodySize;
+        
+        if (type === 'B') {
+            currentPrice += priceChange;
         } else {
-            const options = {
-                series: [{ name: 'TRX Price', data: candleData }],
-                chart: {
-                    type: 'candlestick',
-                    height: 350,
-                    id: 'trx-candles',
-                    background: 'transparent',
-                    animations: { enabled: false },
-                    toolbar: { show: true, tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
-                    zoom: { enabled: true, type: 'x', autoScaleYaxis: false } // Y-axis ကို auto မချုံ့ခိုင်းတော့ပါ
-                },
-                plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' } } },
-                xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } } },
-                yaxis: {
-                    min: 0,
-                    max: 1000,
-                    tickAmount: 10,
-                    labels: { style: { colors: '#f1c40f' }, formatter: (val) => val.toFixed(0) }
-                },
-                grid: { borderColor: 'rgba(148, 163, 184, 0.1)' }
-            };
-            candleChart = new ApexCharts(chartElement, options);
-            candleChart.render();
+            currentPrice -= priceChange;
         }
+        
+        let close = currentPrice;
+        
+        // High/Low Wick (မြီးစာတိုင်) ကို ပိုပြီး Realistic ဖြစ်အောင် 0.01 ခန့် အပိုဆောင်းခြင်း
+        let high = Math.max(open, close) + (Math.random() * 0.015);
+        let low = Math.min(open, close) - (Math.random() * 0.015);
+
+        let timestamp = new Date().getTime() - (rawData.length - index) * 60000;
+
+        return {
+            x: timestamp,
+            y: [
+                parseFloat(open.toFixed(2)), 
+                parseFloat(high.toFixed(2)), 
+                parseFloat(low.toFixed(2)), 
+                parseFloat(close.toFixed(2))
+            ]
+        };
+    });
+
+    if (candleChart) {
+        candleChart.updateSeries([{ data: candleData }], true);
+    } else {
+        const options = {
+            series: [{ name: 'TRX/USDT', data: candleData }],
+            chart: {
+                type: 'candlestick',
+                height: 350,
+                id: 'trx-candles',
+                background: 'transparent',
+                animations: { enabled: true, easing: 'linear', speed: 500 },
+                toolbar: { show: true }
+            },
+            plotOptions: {
+                candlestick: {
+                    colors: { upward: '#22c55e', downward: '#ef4444' },
+                    wick: { useFillColor: true }
+                }
+            },
+            xaxis: { 
+                type: 'datetime',
+                labels: { style: { colors: '#94a3b8' } }
+            },
+            yaxis: {
+                opposite: true,
+                labels: { 
+                    style: { colors: '#f1c40f' },
+                    formatter: (val) => val.toFixed(2) 
+                },
+                // လက်ရှိ ဈေးနှုန်းဝန်းကျင်မှာတင် Scale ကို ကပ်ထားပေးမယ်
+                forceNiceScale: true 
+            },
+            grid: { borderColor: 'rgba(148, 163, 184, 0.05)' },
+            tooltip: { theme: 'dark' }
+        };
+        candleChart = new ApexCharts(chartElement, options);
+        candleChart.render();
     }
+}
 
     window.onload = () => { loadTrendData(); startTimer(); };
 </script>
