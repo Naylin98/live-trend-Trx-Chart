@@ -152,7 +152,7 @@
 
     <div id="candleContainer">
         <div id="chartHeader">
-            <span style="display:inline-block; width:5px; height:8px; background:#f1c40f; border-radius:50%;"></span>
+            <span style="display:inline-block; width:8px; height:8px; background:#f1c40f; border-radius:50%;"></span>
             TRX MW FX-STYLE TREND (B↑ S↓)
         </div>
         <div id="apexCandleChart"></div>
@@ -304,7 +304,7 @@
 
         // --- Data Preparation for Candle (Step-based Price) ---
         // ဒေတာအဟောင်းကနေ အသစ်ကို အစဉ်လိုက်တွက်ချက်မယ်
-        let currentPrice = 1.0001; // အလယ်ကနေ စတင်မယ်
+        let currentPrice = 1.0005; // အလယ်ကနေ စတင်မယ်
         const candleData = rawData.map((item) => {
             const type = (item.type || "").toUpperCase();
             let openPrice = currentPrice;
@@ -353,7 +353,7 @@
                         reset: true
                     }
                 },
-                animations: { enabled: true }, // Live update မှာ scroll မဖြစ်အောင်
+                animations: { enabled: false }, // Live update မှာ scroll မဖြစ်အောင်
                 zoom: {
                     enabled: true,
                     type: 'x', // Horizontal zoom
@@ -369,7 +369,7 @@
                     wick: { useFillColor: true },
                     candle: {
                         width: {
-                            max: 10, // Candle အချောင်းလေးတွေ ကျဉ်းကျဉ်းလေးဖြစ်အောင်
+                            max: 15, // Candle အချောင်းလေးတွေ ကျဉ်းကျဉ်းလေးဖြစ်အောင်
                         }
                     }
                 }
@@ -388,8 +388,8 @@
                     style: { colors: '#f1c40f', fontSize: '11px', fontWeight: 'bold' },
                     formatter: (value) => value.toFixed(5) // FX style price format (1.0007)
                 },
-                tickAmount: 5, // Y-axis မှာ ၅ ကြောင်းပဲပြမယ်
-                min: 1.0000, max: 1.1000 // FX price range
+                tickAmount: 10, // Y-axis မှာ ၅ ကြောင်းပဲပြမယ်
+                min: 1.0000, max: 1.0010 // FX price range
             },
             grid: {
                 borderColor: 'rgba(148, 163, 184, 0.1)',
