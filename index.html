@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRX Live - Modern UI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; display: flex; justify-content: center; padding: 10px; color: #f8fafc; overflow-x: hidden; margin: 0; }
+        .container { background: #1e293b; padding: 20px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; width: 100%; max-width: 1150px; border: 1px solid #334155; }
+        .header { text-align: center; color: #f1c40f; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+
+        .dashboard-labels { display: flex; align-items: center; background: #1e293b; padding: 12px 0; border-bottom: 2px solid #334155; font-size: 13px; font-weight: bold; color: #f1c40f; text-transform: uppercase; position: sticky; top: 0; z-index: 100; }
+        .lbl-trx { width: 130px; text-align: center; }
+        .lbl-trend { width: 350px; text-align: center; }
+        .lbl-side { display: flex; flex-grow: 1; padding-left: 15px; gap: 5px; align-items: center; }
+
+        .row-grid { display: flex; align-items: center; height: 45px; border-bottom: 1px solid #334155; position: relative; z-index: 5; }
+        .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
+        
+        .cells { display: flex; flex: 0 0 auto; width: 320px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
+        .cell { width: 26px; height: 26px; line-height: 26px; text-align: center; font-weight: bold; color: #475569; font-size: 14px; border-radius: 50%; z-index: 10; background: rgba(255,255,255,0.05); }
+        
+        .active-green { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
+        .active-red { background-color: #ef4444 !important; color: white !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+        .active-purple { background-color: #a855f7 !important; color: white !important; box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+
+        .side-info { display: flex; align-items: center; flex-grow: 1; padding-left: 15px; border-left: 1px solid #334155; gap: 5px; }
+        .text-s { width: 35px; font-weight: bold; color: #3498db; text-align: center; }
+        .text-b { width: 35px; font-weight: bold; color: #e67e22; text-align: center; }
+        .extra-text { width: 150px; font-size: 12px; color: #cbd5e1; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pred-text { width: 45px; color: #f1c40f; font-weight: bold; text-align: center; background: rgba(241, 196, 15, 0.1); border-radius: 4px; }
+        
+        @keyframes win-blink { 0%, 100% { background: rgba(34, 197, 94, 0.15); } 50% { background: rgba(34, 197, 94, 0.4); } }
+        @keyframes loss-blink { 0%, 100% { background: rgba(239, 68, 68, 0.15); } 50% { background: rgba(239, 68, 68, 0.4); } }
+
+        .win-text { color: #22c55e; background: rgba(34, 197, 94, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: win-blink 1.5s infinite; }
+        .loss-text { color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: loss-blink 1.5s infinite; }
+
+        canvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1; }
+        .footer-info { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-top: 20px; border-top: 1px solid #334155; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="chartBox">
+    <div class="header">TRX MW MODERN TREND (LIVE)</div>
+    
+    <div class="dashboard-labels">
+        <div class="lbl-trx">TRX ISSUE</div>
+        <div class="lbl-trend">TREND LINE</div>
+        <div class="lbl-side">
+            <span style="width:35px;">B/S</span>
+            <span style="width:150px;">MW STRATEGY</span>
+            <span style="width:45px;">PRED</span>
+            <span style="width:70px;">RESULT</span>
+            <span style="flex-grow:1; text-align: right; padding-right:15px;">WIN RATE</span>
+        </div>
+    </div>
+
+    <canvas id="lineCanvas"></canvas>
+    <div id="chartData">
+        <div style="text-align: center; padding: 40px; color: #94a3b8;">?? Loading Live Data...</div>
+    </div>
+    
+    <div class="footer-info">
+        <div id="connection-status">? Initializing...</div>
+        <div id="last-update">Last Update: --:--:--</div>
+    </div>
+</div>
+
+<script>
+    const REFRESH_INTERVAL = 10000;
+
+   // ????????? ??????? Web App URL ??? ??????????????
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtHjuZ50vMa6S3WN3pyW2eF5qXH5tM8Obyry3sQcrQJ6-2e87aN1BR62f-q8lZ1I53/exec"; 
+
+function loadTrendData() {
+    const conn = document.getElementById('connection-status');
+    // window.location.href ???? WEB_APP_URL ??? ?????????????
+    fetch(WEB_APP_URL + "?action=getRawData") 
+        .then(res => res.json())
+        
+            // ... (??????? code ???? ?????????)
+            .then(rawData => {
+                if (rawData && rawData.length > 0) {
+                    renderModernChart(rawData.reverse()); 
+                    document.getElementById('last-update').innerText = "Last Update: " + new Date().toLocaleTimeString();
+                    conn.innerText = "? Connected (Live)";
+                    conn.style.color = "#22c55e";
+                }
+            })
+            .catch(err => {
+                conn.innerText = "? Connection Error (Check Deployment)";
+                conn.style.color = "#ef4444";
+            });
+    }
+
+    function getActiveClass(digit) {
+        const d = parseInt(digit);
+        if ([0, 5].includes(d)) return "active-purple";
+        if ([1, 3, 7, 9].includes(d)) return "active-green";
+        if ([2, 4, 6, 8].includes(d)) return "active-red";
+        return "";
+    }
+
+    function renderModernChart(displayData) {
+        const output = document.getElementById('chartData');
+        const container = document.getElementById('chartBox');
+        const canvas = document.getElementById('lineCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        output.innerHTML = ""; 
+
+        displayData.forEach((item, rIdx) => {
+            const digit = parseInt(item.digit);
+            const resClass = item.result === "WIN" ? "win-text" : (item.result === "LOSS" ? "loss-text" : "");
+            
+            let winRateStr = item.strend || "0%";
+            if (!winRateStr.toString().includes("%")) winRateStr = (parseFloat(winRateStr) * 100).toFixed(2) + "%";
+
+            let digitsHtml = "";
+            for (let i = 0; i <= 9; i++) {
+                const highlight = (i === digit) ? getActiveClass(digit) : "";
+                digitsHtml += `<div class="cell ${highlight}" id="dot-${rIdx}-${i}">${i}</div>`;
+            }
+
+            output.innerHTML += `
+                <div class="row-grid">
+                    <div class="row-label">${item.label}</div>
+                    <div class="cells">${digitsHtml}</div>
+                    <div class="side-info">
+                        <div class="${item.type === 'B' ? 'text-b' : 'text-s'}">${item.type || ""}</div>
+                        <div class="extra-text">${item.extraData || ""}</div>
+                        <div class="pred-text">${item.prediction || ""}</div>
+                        <div class="${resClass}">${item.result || "---"}</div>
+                        <div style="flex-grow:1; text-align:right; padding-right:15px; color:#38bdf8; font-weight:bold;">${winRateStr}</div>
+                    </div>
+                </div>`;
+        });
+
+        setTimeout(() => {
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "#ff4444"; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
+            ctx.beginPath();
+            let hasPoint = false;
+            displayData.forEach((item, i) => {
+                const el = document.getElementById(`dot-${i}-${parseInt(item.digit)}`);
+                if (el) {
+                    const r = el.getBoundingClientRect(), cr = container.getBoundingClientRect();
+                    const x = r.left - cr.left + (r.width/2), y = r.top - cr.top + (r.height/2);
+                    if (!hasPoint) { ctx.moveTo(x, y); hasPoint = true; } else ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+        }, 500);
+    }
+
+    window.onload = loadTrendData;
+    setInterval(loadTrendData, REFRESH_INTERVAL);
+</script>
+</body>
+</html>
