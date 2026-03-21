@@ -192,13 +192,14 @@
         }, 500);
     }
 
-    function renderApexCandleChart(rawData) {
+   function renderApexCandleChart(rawData) {
     const chartElement = document.getElementById('apexCandleChart');
     if (!chartElement) return;
 
-    // User သတ်မှတ်ချက်များ
-    let currentPrice = 10000; 
+    // အခြေခံ သတ်မှတ်ချက်များ
+    const basePrice = 10000; 
     const bodySize = 0.02;
+    let currentPrice = basePrice; 
 
     const candleData = rawData.map((item, index) => {
         const digit = parseInt(item.digit) || 0;
@@ -206,21 +207,21 @@
         
         let open = currentPrice;
         
-        // Digit ပေါ်မူတည်ပြီး ဈေးနှုန်းအတက်အကျကို တွက်ချက်ခြင်း
-        // အပြောင်းအလဲ = (Digit + 1) * bodySize
-        let priceChange = (digit + 1) * bodySize;
+        // အတက်အကျ တွက်ချက်ခြင်း (Digit * bodySize)
+        // Digit 0 ဖြစ်နေရင်တောင် အနည်းငယ် လှုပ်ရှားမှုရှိအောင် (digit + 0.5) သုံးထားပါတယ်
+        let movement = (digit + 0.5) * bodySize;
         
         if (type === 'B') {
-            currentPrice += priceChange;
+            currentPrice += movement;
         } else {
-            currentPrice -= priceChange;
+            currentPrice -= movement;
         }
         
         let close = currentPrice;
         
-        // High/Low Wick (မြီးစာတိုင်) ကို ပိုပြီး Realistic ဖြစ်အောင် 0.01 ခန့် အပိုဆောင်းခြင်း
-        let high = Math.max(open, close) + (Math.random() * 0.015);
-        let low = Math.min(open, close) - (Math.random() * 0.015);
+        // High/Low Wick (မြီးစာတိုင်) ကို Realistic ဖြစ်အောင် ဖန်တီးခြင်း
+        let high = Math.max(open, close) + (Math.random() * 0.01);
+        let low = Math.min(open, close) - (Math.random() * 0.01);
 
         let timestamp = new Date().getTime() - (rawData.length - index) * 60000;
 
@@ -239,14 +240,14 @@
         candleChart.updateSeries([{ data: candleData }], true);
     } else {
         const options = {
-            series: [{ name: 'TRX/USDT', data: candleData }],
+            series: [{ name: 'TRX Index', data: candleData }],
             chart: {
                 type: 'candlestick',
-                height: 350,
+                height: 380, // ပုံထဲကလို screen အပြည့်နီးပါးရအောင် အမြင့်မြှင့်ထားတယ်
                 id: 'trx-candles',
-                background: 'transparent',
-                animations: { enabled: true, easing: 'linear', speed: 500 },
-                toolbar: { show: true }
+                background: '#0f172a', // Dark theme ပိုပီပြင်အောင်
+                animations: { enabled: true, easing: 'smooth', speed: 800 },
+                toolbar: { show: true, autoSelected: 'pan' }
             },
             plotOptions: {
                 candlestick: {
@@ -254,21 +255,35 @@
                     wick: { useFillColor: true }
                 }
             },
+            annotations: {
+                yaxis: [{
+                    y: currentPrice,
+                    borderColor: '#22c55e',
+                    label: {
+                        borderColor: '#22c55e',
+                        style: { color: '#fff', background: '#22c55e' },
+                        text: `Live: ${currentPrice.toFixed(2)}`
+                    }
+                }]
+            },
             xaxis: { 
                 type: 'datetime',
-                labels: { style: { colors: '#94a3b8' } }
+                labels: { style: { colors: '#94a3b8' } },
+                axisBorder: { show: false }
             },
             yaxis: {
                 opposite: true,
                 labels: { 
-                    style: { colors: '#f1c40f' },
+                    style: { colors: '#94a3b8', fontFamily: 'monospace' },
                     formatter: (val) => val.toFixed(2) 
                 },
-                // လက်ရှိ ဈေးနှုန်းဝန်းကျင်မှာတင် Scale ကို ကပ်ထားပေးမယ်
-                forceNiceScale: true 
+                forceNiceScale: true
             },
-            grid: { borderColor: 'rgba(148, 163, 184, 0.05)' },
-            tooltip: { theme: 'dark' }
+            grid: { 
+                borderColor: 'rgba(148, 163, 184, 0.1)',
+                strokeDashArray: 4
+            },
+            tooltip: { theme: 'dark', x: { format: 'HH:mm' } }
         };
         candleChart = new ApexCharts(chartElement, options);
         candleChart.render();
