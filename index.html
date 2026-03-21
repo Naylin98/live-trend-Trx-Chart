@@ -140,88 +140,32 @@
         return "";
     }
 
-    function renderModernChart(displayData) {
-        const output = document.getElementById('chartData');
-        const container = document.getElementById('chartBox');
-        const canvas = document.getElementById('lineCanvas');
-        const ctx = canvas.getContext('2d');
-        output.innerHTML = ""; 
-
-        displayData.forEach((item, rIdx) => {
-            const digit = parseInt(item.digit);
-            const resultValue = (item.result || "").toString().trim().toUpperCase();
-            let resClass = (resultValue === "WIN") ? "win-text" : (resultValue === "LOSS" ? "loss-text" : "");
-            let winRateStr = item.strend || "0%";
-            if (!winRateStr.toString().includes("%")) winRateStr = (parseFloat(winRateStr) * 100).toFixed(2) + "%";
-
-            let digitsHtml = "";
-            for (let i = 0; i <= 9; i++) {
-                const highlight = (i === digit) ? getActiveClass(digit) : "";
-                digitsHtml += `<div class="cell ${highlight}" id="dot-${rIdx}-${i}">${i}</div>`;
-            }
-
-            output.innerHTML += `
-                <div class="row-grid">
-                    <div class="row-label">${item.label}</div>
-                    <div class="cells">${digitsHtml}</div>
-                    <div class="side-info">
-                        <div class="${item.type === 'B' ? 'text-b' : 'text-s'}">${item.type || ""}</div>
-                        <div class="extra-text">${item.extraData || ""}</div>
-                        <div class="pred-text">${item.prediction || ""}</div>
-                        <div class="${resClass}">${item.result || "---"}</div>
-                        <div style="flex-grow:1; text-align:right; padding-right:15px; color:#38bdf8; font-weight:bold;">${winRateStr}</div>
-                    </div>
-                </div>`;
-        });
-
-        setTimeout(() => {
-            canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "#ff4444"; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
-            ctx.beginPath();
-            let hasPoint = false;
-            displayData.forEach((item, i) => {
-                const el = document.getElementById(`dot-${i}-${parseInt(item.digit)}`);
-                if (el) {
-                    const r = el.getBoundingClientRect(), cr = container.getBoundingClientRect();
-                    const x = r.left - cr.left + (r.width/2), y = r.top - cr.top + (r.height/2);
-                    if (!hasPoint) { ctx.moveTo(x, y); hasPoint = true; } else ctx.lineTo(x, y);
-                }
-            });
-            ctx.stroke();
-        }, 500);
-    }
-
-   function renderApexCandleChart(rawData) {
+    function renderApexCandleChart(rawData) {
     const chartElement = document.getElementById('apexCandleChart');
     if (!chartElement) return;
 
-    // အခြေခံ သတ်မှတ်ချက်များ
-    const basePrice = 10000; 
-    const bodySize = 0.02;
+    // MT5 Standard Settings
+    const basePrice = 10000.00; 
+    const bodySize = 0.05; // Candle တစ်ချောင်းရဲ့ ပုံသေ အကွာအဝေး (ညီနေစေဖို့)
     let currentPrice = basePrice; 
 
     const candleData = rawData.map((item, index) => {
-        const digit = parseInt(item.digit) || 0;
         const type = (item.type || "").toUpperCase();
         
         let open = currentPrice;
         
-        // အတက်အကျ တွက်ချက်ခြင်း (Digit * bodySize)
-        // Digit 0 ဖြစ်နေရင်တောင် အနည်းငယ် လှုပ်ရှားမှုရှိအောင် (digit + 0.5) သုံးထားပါတယ်
-        let movement = (digit + 0.5) * bodySize;
-        
+        // တစ်ချောင်းနဲ့တစ်ချောင်း ညီနေအောင် ပုံသေ bodySize ကိုပဲ သုံးမယ်
         if (type === 'B') {
-            currentPrice += movement;
+            currentPrice += bodySize;
         } else {
-            currentPrice -= movement;
+            currentPrice -= bodySize;
         }
         
         let close = currentPrice;
         
-        // High/Low Wick (မြီးစာတိုင်) ကို Realistic ဖြစ်အောင် ဖန်တီးခြင်း
-        let high = Math.max(open, close) + (Math.random() * 0.01);
-        let low = Math.min(open, close) - (Math.random() * 0.01);
+        // Wick (မီးစာတိုင်) ကိုလည်း သိပ်မရှည်အောင် ပုံသေ 0.01 ပဲ ထားမယ်
+        let high = Math.max(open, close) + 0.01;
+        let low = Math.min(open, close) - 0.01;
 
         let timestamp = new Date().getTime() - (rawData.length - index) * 60000;
 
@@ -236,54 +180,58 @@
         };
     });
 
+    const lastCandle = candleData[candleData.length - 1];
+    const isBullish = lastCandle.y[3] >= lastCandle.y[0];
+    const liveLineColor = isBullish ? '#26a69a' : '#ef5350';
+
     if (candleChart) {
-        candleChart.updateSeries([{ data: candleData }], true);
-    } else {
-        const options = {
-            series: [{ name: 'TRX Index', data: candleData }],
-            chart: {
-                type: 'candlestick',
-                height: 380, // ပုံထဲကလို screen အပြည့်နီးပါးရအောင် အမြင့်မြှင့်ထားတယ်
-                id: 'trx-candles',
-                background: '#0f172a', // Dark theme ပိုပီပြင်အောင်
-                animations: { enabled: true, easing: 'smooth', speed: 800 },
-                toolbar: { show: true, autoSelected: 'pan' }
-            },
-            plotOptions: {
-                candlestick: {
-                    colors: { upward: '#22c55e', downward: '#ef4444' },
-                    wick: { useFillColor: true }
-                }
-            },
+        candleChart.updateOptions({
+            series: [{ name: 'TRX/USDT', data: candleData }],
             annotations: {
                 yaxis: [{
                     y: currentPrice,
-                    borderColor: '#22c55e',
+                    borderColor: liveLineColor,
                     label: {
-                        borderColor: '#22c55e',
-                        style: { color: '#fff', background: '#22c55e' },
-                        text: `Live: ${currentPrice.toFixed(2)}`
+                        borderColor: liveLineColor,
+                        style: { color: '#fff', background: liveLineColor },
+                        text: currentPrice.toFixed(2),
+                        position: 'right',
+                        offsetX: 60
                     }
                 }]
+            }
+        }, false, false, false);
+    } else {
+        const options = {
+            series: [{ name: 'TRX/USDT', data: candleData }],
+            chart: {
+                type: 'candlestick',
+                height: 400,
+                id: 'trx-candles',
+                background: '#0b0e14',
+                animations: { enabled: true, speed: 300 },
+                toolbar: { show: true }
             },
-            xaxis: { 
-                type: 'datetime',
-                labels: { style: { colors: '#94a3b8' } },
-                axisBorder: { show: false }
+            plotOptions: {
+                candlestick: {
+                    colors: { upward: '#26a69a', downward: '#ef5350' },
+                    wick: { useFillColor: true }
+                }
             },
+            xaxis: { type: 'datetime', labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
             yaxis: {
                 opposite: true,
                 labels: { 
-                    style: { colors: '#94a3b8', fontFamily: 'monospace' },
-                    formatter: (val) => val.toFixed(2) 
-                },
-                forceNiceScale: true
+                    style: { fontSize: '11px', colors: '#cbd5e1' },
+                    formatter: (val) => val.toFixed(2)
+                }
             },
             grid: { 
-                borderColor: 'rgba(148, 163, 184, 0.1)',
-                strokeDashArray: 4
-            },
-            tooltip: { theme: 'dark', x: { format: 'HH:mm' } }
+                borderColor: '#1e293b',
+                strokeDashArray: 3,
+                xaxis: { lines: { show: true } },
+                yaxis: { lines: { show: true } }
+            }
         };
         candleChart = new ApexCharts(chartElement, options);
         candleChart.render();
