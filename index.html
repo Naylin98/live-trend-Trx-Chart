@@ -14,18 +14,32 @@
         #timer-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; margin-bottom: -2px; }
         #countdown { font-size: 16px; font-weight: bold; color: #f1c40f; font-family: monospace; }
 
+        /* BIG/SMALL Alert Box Styling */
+        .pred-alert-box {
+            position: absolute;
+            right: 85px; 
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px;
+            font-weight: 900;
+            padding: 6px 14px;
+            border-radius: 8px;
+            display: none;
+            letter-spacing: 2px;
+            z-index: 1000;
+        }
+        .alert-big { display: block; color: #22c55e; border: 3px solid #22c55e; background: rgba(34, 197, 94, 0.1); animation: big-flash 1s infinite; }
+        .alert-small { display: block; color: #ef4444; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.1); animation: small-flash 1s infinite; }
+        @keyframes big-flash { 0%, 100% { box-shadow: 0 0 5px #22c55e; opacity: 1; border-color: #22c55e; } 50% { box-shadow: 0 0 20px #22c55e; opacity: 0.6; border-color: transparent; } }
+        @keyframes small-flash { 0%, 100% { box-shadow: 0 0 5px #ef4444; opacity: 1; border-color: #ef4444; } 50% { box-shadow: 0 0 20px #ef4444; opacity: 0.6; border-color: transparent; } }
+
         .dashboard-labels { display: flex; align-items: center; background: #1e293b; padding: 12px 0; border-bottom: 2px solid #334155; font-size: 13px; font-weight: bold; color: #f1c40f; text-transform: uppercase; position: sticky; top: 0; z-index: 100; }
         .lbl-trx { width: 130px; text-align: center; }
         .lbl-trend { width: 350px; text-align: center; }
         .lbl-side { display: flex; flex-grow: 1; padding-left: 15px; gap: 5px; align-items: center; }
 
         .row-grid { display: flex; align-items: center; height: 45px; border-bottom: 1px solid #334155; position: relative; z-index: 5; }
-        
-        /* ၁၀ လိုင်းမြောက် Highlight အပိုင်း */
-        #chartData .row-grid:nth-child(10) {
-            background: rgba(248, 250, 252, 0.08); 
-            border-left: 3px solid #f1c40f;
-        }
+        #chartData .row-grid:nth-child(10) { background: rgba(248, 250, 252, 0.08); border-left: 3px solid #f1c40f; }
 
         .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
         .cells { display: flex; flex: 0 0 auto; width: 350px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
@@ -41,41 +55,11 @@
         .extra-text { width: 150px; font-size: 12px; color: #cbd5e1; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pred-text { width: 45px; color: #f1c40f; font-weight: bold; text-align: center; background: rgba(241, 196, 15, 0.1); border-radius: 4px; }
         
-        /* WIN အတွက် မိတ်တုပ် Animation */
-@keyframes win-blink {
-    0%, 100% { background: rgba(34, 197, 94, 0.15); opacity: 1; }
-    50% { background: rgba(34, 197, 94, 0.5); opacity: 0.7; }
-}
+        @keyframes win-blink { 0%, 100% { background: rgba(34, 197, 94, 0.15); opacity: 1; } 50% { background: rgba(34, 197, 94, 0.5); opacity: 0.7; } }
+        @keyframes loss-blink { 0%, 100% { background: rgba(239, 68, 68, 0.15); opacity: 1; } 50% { background: rgba(239, 68, 68, 0.5); opacity: 0.7; } }
 
-/* LOSS အတွက် မိတ်တုပ် Animation */
-@keyframes loss-blink {
-    0%, 100% { background: rgba(239, 68, 68, 0.15); opacity: 1; }
-    50% { background: rgba(239, 68, 68, 0.5); opacity: 0.7; }
-}
-
-.win-text { 
-    color: #22c55e; 
-    background: rgba(34, 197, 94, 0.15); 
-    padding: 4px 8px; 
-    border-radius: 5px; 
-    font-weight: bold; 
-    width: 70px; 
-    text-align: center;
-    /* ဒီ line ပါမှ မိတ်တုပ်မှာပါ */
-    animation: win-blink 1.5s infinite; 
-}
-
-.loss-text { 
-    color: #ef4444; 
-    background: rgba(239, 68, 68, 0.15); 
-    padding: 4px 8px; 
-    border-radius: 5px; 
-    font-weight: bold; 
-    width: 70px; 
-    text-align: center;
-    /* ဒီ line ပါမှ မိတ်တုပ်မှာပါ */
-    animation: loss-blink 1.5s infinite; 
-}
+        .win-text { color: #22c55e; background: rgba(34, 197, 94, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: win-blink 1.5s infinite; }
+        .loss-text { color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: loss-blink 1.5s infinite; }
 
         canvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1; }
         .footer-info { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-top: 20px; border-top: 1px solid #334155; padding-top: 10px; }
@@ -86,6 +70,8 @@
 <div class="container" id="chartBox">
     <div class="header">
         TRX MW MODERN TREND (LIVE)
+        <div id="bigSmallAlert" class="pred-alert-box"></div>
+        
         <div class="timer-box">
             <span id="timer-label">Next</span>
             <div id="countdown">60s</div>
@@ -125,7 +111,21 @@
             .then(res => res.json())
             .then(rawData => {
                 if (rawData && rawData.length > 0) {
-                    renderModernChart(rawData.reverse()); 
+                    const displayData = rawData.reverse();
+                    renderModernChart(displayData); 
+                    
+                    // --- BIG/SMALL Alert Logic ---
+                    const alertBox = document.getElementById('bigSmallAlert');
+                    const latestPred = displayData[0].prediction ? displayData[0].prediction.toString().toUpperCase() : "";
+                    alertBox.className = "pred-alert-box"; 
+                    if (latestPred.endsWith('B')) {
+                        alertBox.innerText = "BIG"; alertBox.classList.add('alert-big');
+                    } else if (latestPred.endsWith('S')) {
+                        alertBox.innerText = "SMALL"; alertBox.classList.add('alert-small');
+                    } else {
+                        alertBox.style.display = "none";
+                    }
+
                     document.getElementById('last-update').innerText = "Last Update: " + new Date().toLocaleTimeString();
                     conn.innerText = " Connected (Live)";
                     conn.style.color = "#22c55e";
@@ -138,38 +138,33 @@
     }
 
     function startTimer() {
-    const timerDisplay = document.getElementById('countdown');
-    const timerBox = document.querySelector('.timer-box'); // box အရောင်ပါ ပြောင်းဖို့
+        const timerDisplay = document.getElementById('countdown');
+        const timerBox = document.querySelector('.timer-box');
 
-    setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
-        
-        // --- ၁၀ စက္ကန့်အောက်ရောက်ရင် အရောင်ပြောင်းလဲမှု လုပ်ဆောင်ချက် ---
-        if (timeLeft <= 10) {
-            timerDisplay.style.color = "#ef4444"; // စာသားကို အနီရောင်ပြောင်း
-            timerBox.style.borderColor = "#ef4444"; // Box ဘောင်ကို အနီရောင်ပြောင်း
-            timerBox.style.boxShadow = "0 0 10px rgba(239, 68, 68, 0.5)"; // အနီရောင် အလင်းဖြာထွက်စေမယ်
+        setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
             
-            // ၅ စက္ကန့်အောက်ရောက်ရင် Blink (မိတ်တုပ်) ဖြစ်စေမယ်
-            if (timeLeft <= 5) {
-                timerDisplay.style.visibility = (timeLeft % 2 === 0) ? 'hidden' : 'visible';
+            if (timeLeft <= 10) {
+                timerDisplay.style.color = "#ef4444";
+                timerBox.style.borderColor = "#ef4444";
+                timerBox.style.boxShadow = "0 0 10px rgba(239, 68, 68, 0.5)";
+                if (timeLeft <= 5) {
+                    timerDisplay.style.visibility = (timeLeft % 2 === 0) ? 'hidden' : 'visible';
+                }
+            } else {
+                timerDisplay.style.color = "#f1c40f"; 
+                timerBox.style.borderColor = "#f1c40f";
+                timerBox.style.boxShadow = "none";
+                timerDisplay.style.visibility = 'visible';
             }
-        } else {
-            // ပုံမှန် အခြေအနေ (၁၀ စက္ကန့်အထက်)
-            timerDisplay.style.color = "#f1c40f"; 
-            timerBox.style.borderColor = "#f1c40f";
-            timerBox.style.boxShadow = "none";
-            timerDisplay.style.visibility = 'visible';
-        }
 
-        if (timeLeft <= 0) {
-            timeLeft = 60;
-            loadTrendData(); // Data အသစ်ဆွဲတင်မယ်
-        }
-    }, 1000);
-}
-
+            if (timeLeft <= 0) {
+                timeLeft = 60;
+                loadTrendData();
+            }
+        }, 1000);
+    }
 
     function getActiveClass(digit) {
         const d = parseInt(digit);
@@ -184,23 +179,16 @@
         const container = document.getElementById('chartBox');
         const canvas = document.getElementById('lineCanvas');
         const ctx = canvas.getContext('2d');
-        
         output.innerHTML = ""; 
 
         displayData.forEach((item, rIdx) => {
-    const digit = parseInt(item.digit);
-    
-    // Result က WIN သို့မဟုတ် LOSS ဖြစ်မှ Class ထည့်ပေးမှာပါ
-    // trim() ထည့်ထားခြင်းဖြင့် ရှေ့နောက် space တွေကို ဖယ်ရှားပေးပါမယ်
-    const resultValue = (item.result || "").toString().trim().toUpperCase();
-    
-    let resClass = "";
-    if (resultValue === "WIN") {
-        resClass = "win-text";
-    } else if (resultValue === "LOSS") {
-        resClass = "loss-text";
-    }
-        let winRateStr = item.strend || "0%";
+            const digit = parseInt(item.digit);
+            const resultValue = (item.result || "").toString().trim().toUpperCase();
+            let resClass = "";
+            if (resultValue === "WIN") resClass = "win-text";
+            else if (resultValue === "LOSS") resClass = "loss-text";
+
+            let winRateStr = item.strend || "0%";
             if (!winRateStr.toString().includes("%")) winRateStr = (parseFloat(winRateStr) * 100).toFixed(2) + "%";
 
             let digitsHtml = "";
