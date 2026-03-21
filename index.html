@@ -8,34 +8,9 @@
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; display: flex; justify-content: center; padding: 10px; color: #f8fafc; overflow-x: hidden; margin: 0; }
         .container { background: #1e293b; padding: 20px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; width: 100%; max-width: 1150px; border: 1px solid #334155; }
         
-        /* Header & Timer Styling */
-        .header { 
-            position: relative; 
-            text-align: center; 
-            color: #f1c40f; 
-            margin-bottom: 20px; 
-            border-bottom: 1px solid #334155; 
-            padding-bottom: 15px; 
-            font-size: 20px; 
-            font-weight: bold; 
-            letter-spacing: 1px; 
-        }
+        .header { position: relative; text-align: center; color: #f1c40f; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
 
-        .timer-box {
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(15, 23, 42, 0.5);
-            padding: 4px 12px;
-            border-radius: 8px;
-            border: 1px solid #f1c40f;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 50px;
-        }
-
+        .timer-box { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.5); padding: 4px 12px; border-radius: 8px; border: 1px solid #f1c40f; display: flex; flex-direction: column; align-items: center; min-width: 50px; }
         #timer-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; margin-bottom: -2px; }
         #countdown { font-size: 16px; font-weight: bold; color: #f1c40f; font-family: monospace; }
 
@@ -45,8 +20,14 @@
         .lbl-side { display: flex; flex-grow: 1; padding-left: 15px; gap: 5px; align-items: center; }
 
         .row-grid { display: flex; align-items: center; height: 45px; border-bottom: 1px solid #334155; position: relative; z-index: 5; }
-        .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
         
+        /* ၁၀ လိုင်းမြောက် Highlight အပိုင်း */
+        #chartData .row-grid:nth-child(10) {
+            background: rgba(248, 250, 252, 0.08); 
+            border-left: 3px solid #f1c40f;
+        }
+
+        .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
         .cells { display: flex; flex: 0 0 auto; width: 350px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
         .cell { width: 26px; height: 26px; line-height: 26px; text-align: center; font-weight: bold; color: #475569; font-size: 14px; border-radius: 50%; z-index: 10; background: rgba(255,255,255,0.05); }
         
@@ -60,11 +41,8 @@
         .extra-text { width: 150px; font-size: 12px; color: #cbd5e1; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pred-text { width: 45px; color: #f1c40f; font-weight: bold; text-align: center; background: rgba(241, 196, 15, 0.1); border-radius: 4px; }
         
-        @keyframes win-blink { 0%, 100% { background: rgba(34, 197, 94, 0.15); } 50% { background: rgba(34, 197, 94, 0.4); } }
-        @keyframes loss-blink { 0%, 100% { background: rgba(239, 68, 68, 0.15); } 50% { background: rgba(239, 68, 68, 0.4); } }
-
-        .win-text { color: #22c55e; background: rgba(34, 197, 94, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: win-blink 1.5s infinite; }
-        .loss-text { color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: loss-blink 1.5s infinite; }
+        .win-text { color: #22c55e; background: rgba(34, 197, 94, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; }
+        .loss-text { color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; }
 
         canvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1; }
         .footer-info { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-top: 20px; border-top: 1px solid #334155; padding-top: 10px; }
@@ -121,7 +99,7 @@
                 }
             })
             .catch(err => {
-                conn.innerText = " Connection Error (Check Deployment)";
+                conn.innerText = " Connection Error";
                 conn.style.color = "#ef4444";
             });
     }
@@ -131,17 +109,7 @@
         setInterval(() => {
             timeLeft--;
             timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
-            
-            if (timeLeft <= 10) {
-                timerDisplay.style.color = "#ef4444"; // ၁၀ စက္ကန့်အောက်ရောက်ရင် အရောင်နီမယ်
-            } else {
-                timerDisplay.style.color = "#f1c40f";
-            }
-
-            if (timeLeft <= 0) {
-                timeLeft = 60;
-                loadTrendData(); // ၀ ရောက်တာနဲ့ Data update မယ်
-            }
+            if (timeLeft <= 0) { timeLeft = 60; loadTrendData(); }
         }, 1000);
     }
 
@@ -164,7 +132,6 @@
         displayData.forEach((item, rIdx) => {
             const digit = parseInt(item.digit);
             const resClass = item.result === "WIN" ? "win-text" : (item.result === "LOSS" ? "loss-text" : "");
-            
             let winRateStr = item.strend || "0%";
             if (!winRateStr.toString().includes("%")) winRateStr = (parseFloat(winRateStr) * 100).toFixed(2) + "%";
 
@@ -207,10 +174,7 @@
         }, 500);
     }
 
-    window.onload = () => {
-        loadTrendData();
-        startTimer();
-    };
+    window.onload = () => { loadTrendData(); startTimer(); };
 </script>
 </body>
 </html>
