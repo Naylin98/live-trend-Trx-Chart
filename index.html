@@ -3,99 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRX Live - Modern UI</title>
+    <title>TRX Live - Fixed Scale UI</title>
     
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; display: flex; justify-content: center; padding: 10px; color: #f8fafc; overflow-x: hidden; margin: 0; }
         .container { background: #1e293b; padding: 20px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; width: 100%; max-width: 1150px; border: 1px solid #334155; }
-        
         .header { position: relative; text-align: center; color: #f1c40f; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
-
         .timer-box { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.5); padding: 4px 12px; border-radius: 8px; border: 1px solid #f1c40f; display: flex; flex-direction: column; align-items: center; min-width: 50px; }
         #timer-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; margin-bottom: -2px; }
         #countdown { font-size: 16px; font-weight: bold; color: #f1c40f; font-family: monospace; }
-
-        .pred-alert-box {
-            position: absolute;
-            right: 85px; 
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 22px;
-            font-weight: 900;
-            padding: 6px 14px;
-            border-radius: 8px;
-            display: none;
-            letter-spacing: 2px;
-            z-index: 1000;
-        }
+        .pred-alert-box { position: absolute; right: 85px; top: 50%; transform: translateY(-50%); font-size: 22px; font-weight: 900; padding: 6px 14px; border-radius: 8px; display: none; letter-spacing: 2px; z-index: 1000; }
         .alert-big { display: block; color: #22c55e; border: 3px solid #22c55e; background: rgba(34, 197, 94, 0.1); animation: big-flash 1.7s infinite; }
         .alert-small { display: block; color: #ef4444; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.1); animation: small-flash 1.7s infinite; }
         @keyframes big-flash { 0%, 100% { box-shadow: 0 0 5px #22c55e; opacity: 1; border-color: #22c55e; } 50% { box-shadow: 0 0 20px #22c55e; opacity: 0.6; border-color: transparent; } }
         @keyframes small-flash { 0%, 100% { box-shadow: 0 0 5px #ef4444; opacity: 1; border-color: #ef4444; } 50% { box-shadow: 0 0 20px #ef4444; opacity: 0.6; border-color: transparent; } }
-
         .dashboard-labels { display: flex; align-items: center; background: #1e293b; padding: 12px 0; border-bottom: 2px solid #334155; font-size: 13px; font-weight: bold; color: #f1c40f; text-transform: uppercase; position: sticky; top: 0; z-index: 100; }
         .lbl-trx { width: 130px; text-align: center; }
         .lbl-trend { width: 350px; text-align: center; }
         .lbl-side { display: flex; flex-grow: 1; padding-left: 15px; gap: 5px; align-items: center; }
-
         .row-grid { display: flex; align-items: center; height: 45px; border-bottom: 1px solid #334155; position: relative; z-index: 5; }
         #chartData .row-grid:nth-child(10) { background: rgba(248, 250, 252, 0.08); border-left: 3px solid #f1c40f; }
-
         .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
         .cells { display: flex; flex: 0 0 auto; width: 350px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
         .cell { width: 26px; height: 26px; line-height: 26px; text-align: center; font-weight: bold; color: #475569; font-size: 14px; border-radius: 50%; z-index: 10; background: rgba(255,255,255,0.05); }
-        
         .active-green { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
         .active-red { background-color: #ef4444 !important; color: white !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
         .active-purple { background-color: #a855f7 !important; color: white !important; box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
-
         .side-info { display: flex; align-items: center; flex-grow: 1; padding-left: 15px; border-left: 1px solid #334155; gap: 5px; }
         .text-s { width: 35px; font-weight: bold; color: #3498db; text-align: center; }
         .text-b { width: 35px; font-weight: bold; color: #e67e22; text-align: center; }
         .extra-text { width: 150px; font-size: 12px; color: #cbd5e1; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pred-text { width: 45px; color: #f1c40f; font-weight: bold; text-align: center; background: rgba(241, 196, 15, 0.1); border-radius: 4px; }
-        
         @keyframes win-blink { 0%, 100% { background: rgba(34, 197, 94, 0.15); opacity: 1; } 50% { background: rgba(34, 197, 94, 0.5); opacity: 0.7; } }
         @keyframes loss-blink { 0%, 100% { background: rgba(239, 68, 68, 0.15); opacity: 1; } 50% { background: rgba(239, 68, 68, 0.5); opacity: 0.7; } }
-
         .win-text { color: #22c55e; background: rgba(34, 197, 94, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: win-blink 1.5s infinite; }
         .loss-text { color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 4px 8px; border-radius: 5px; font-weight: bold; width: 70px; text-align: center; animation: loss-blink 1.5s infinite; }
-
         canvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1; }
-
-        #candleContainer {
-            margin-top: 20px;
-            background: rgba(15, 23, 42, 0.5); 
-            border-radius: 12px;
-            padding: 10px;
-            border: 1px solid #334155;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #chartHeader {
-            color: #f1c40f;
-            font-size: 13px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 10px;
-            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
-            margin-bottom: 10px;
-        }
-
+        #candleContainer { margin-top: 20px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 10px; border: 1px solid #334155; position: relative; overflow: hidden; }
+        #chartHeader { color: #f1c40f; font-size: 13px; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); margin-bottom: 10px; }
         #apexCandleChart { width: 100%; height: 350px; }
-
         .apexcharts-toolbar { top: -35px !important; right: 10px !important; }
-        .apexcharts-menu-icon, .apexcharts-zoom-icon, .apexcharts-zoomin-icon, .apexcharts-zoomout-icon, .apexcharts-reset-icon, .apexcharts-pan-icon {
-            transform: scale(0.8);
-            filter: invert(1) sepia(1) saturate(5) hue-rotate(15deg);
-        }
-
+        .apexcharts-menu-icon, .apexcharts-zoom-icon, .apexcharts-zoomin-icon, .apexcharts-zoomout-icon, .apexcharts-reset-icon, .apexcharts-pan-icon { transform: scale(0.8); filter: invert(1) sepia(1) saturate(5) hue-rotate(15deg); }
         .footer-info { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-top: 20px; border-top: 1px solid #334155; padding-top: 10px; }
     </style>
 </head>
@@ -105,7 +55,6 @@
     <div class="header">
         TRX MW MODERN TREND (LIVE)
         <div id="bigSmallAlert" class="pred-alert-box"></div>
-        
         <div class="timer-box">
             <span id="timer-label">Next</span>
             <div id="countdown">60s</div>
@@ -149,7 +98,6 @@
     let candleChart = null;
 
     function loadTrendData() {
-        const conn = document.getElementById('connection-status');
         fetch(WEB_APP_URL + "?action=getRawData") 
             .then(res => res.json())
             .then(rawData => {
@@ -165,47 +113,22 @@
                         alertBox.innerText = "BIG"; alertBox.classList.add('alert-big');
                     } else if (latestPred.endsWith('S')) {
                         alertBox.innerText = "SMALL"; alertBox.classList.add('alert-small');
-                    } else {
-                        alertBox.style.display = "none";
-                    }
+                    } else { alertBox.style.display = "none"; }
 
                     document.getElementById('last-update').innerText = "Last Update: " + new Date().toLocaleTimeString();
+                    const conn = document.getElementById('connection-status');
                     conn.innerText = " Connected (Live)";
                     conn.style.color = "#22c55e";
                 }
-            })
-            .catch(err => {
-                conn.innerText = " Connection Error";
-                conn.style.color = "#ef4444";
             });
     }
 
     function startTimer() {
         const timerDisplay = document.getElementById('countdown');
-        const timerBox = document.querySelector('.timer-box');
-
         setInterval(() => {
             timeLeft--;
             timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
-            
-            if (timeLeft <= 10) {
-                timerDisplay.style.color = "#ef4444";
-                timerBox.style.borderColor = "#ef4444";
-                timerBox.style.boxShadow = "0 0 10px rgba(239, 68, 68, 0.5)";
-                if (timeLeft <= 5) {
-                    timerDisplay.style.visibility = (timeLeft % 2 === 0) ? 'hidden' : 'visible';
-                }
-            } else {
-                timerDisplay.style.color = "#f1c40f"; 
-                timerBox.style.borderColor = "#f1c40f";
-                timerBox.style.boxShadow = "none";
-                timerDisplay.style.visibility = 'visible';
-            }
-
-            if (timeLeft <= 0) {
-                timeLeft = 60;
-                loadTrendData();
-            }
+            if (timeLeft <= 0) { timeLeft = 60; loadTrendData(); }
         }, 1000);
     }
 
@@ -227,10 +150,7 @@
         displayData.forEach((item, rIdx) => {
             const digit = parseInt(item.digit);
             const resultValue = (item.result || "").toString().trim().toUpperCase();
-            let resClass = "";
-            if (resultValue === "WIN") resClass = "win-text";
-            else if (resultValue === "LOSS") resClass = "loss-text";
-
+            let resClass = (resultValue === "WIN") ? "win-text" : (resultValue === "LOSS" ? "loss-text" : "");
             let winRateStr = item.strend || "0%";
             if (!winRateStr.toString().includes("%")) winRateStr = (parseFloat(winRateStr) * 100).toFixed(2) + "%";
 
@@ -255,8 +175,7 @@
         });
 
         setTimeout(() => {
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
+            canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = "#ff4444"; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
             ctx.beginPath();
@@ -277,50 +196,46 @@
         const chartElement = document.getElementById('apexCandleChart');
         if (!chartElement) return;
 
-        let currentPrice = 1.0005;
+        // သင်ပေးထားတဲ့ digit ကို အခြေခံပြီး 0-1000 range ထဲရောက်အောင် scale ချဲ့လိုက်ပါတယ်
+        let currentPrice = 500; 
         const candleData = rawData.map((item) => {
+            const digit = parseInt(item.digit) || 0;
             const type = (item.type || "").toUpperCase();
             let openPrice = currentPrice;
-            if (type === 'B') currentPrice = Math.min(currentPrice + 0.0001, 1.0010);
-            else if (type === 'S') currentPrice = Math.max(currentPrice - 0.0001, 1.0000);
+            
+            // Digit အလိုက် ဈေးနှုန်းအတက်အကျကို သိသိသာသာဖြစ်အောင် 10 နဲ့ မြှောက်ထားပါတယ်
+            if (type === 'B') currentPrice = Math.min(currentPrice + (digit * 5), 980);
+            else currentPrice = Math.max(currentPrice - (digit * 5), 20);
+            
             let closePrice = currentPrice;
-            const highPrice = Math.max(openPrice, closePrice) + 0.00002;
-            const lowPrice = Math.min(openPrice, closePrice) - 0.00002;
             let date = new Date().getTime() - (rawData.length - rawData.indexOf(item)) * 60000; 
-            return { x: date, y: [openPrice.toFixed(5), highPrice.toFixed(5), lowPrice.toFixed(5), closePrice.toFixed(5)] };
+            return { x: date, y: [openPrice, openPrice + 5, closePrice - 5, closePrice] };
         });
 
         if (candleChart) {
+            // updateOptions ကိုသုံးပြီး data သစ်ထည့်မယ်၊ ဒါပေမယ့် zoom status ကိုထိန်းထားမယ်
             candleChart.updateOptions({
-                series: [{ data: candleData }],
-                chart: { animations: { enabled: false } }
-            }, false, false, true);
+                series: [{ data: candleData }]
+            }, false, false, true); // true parameter က reset zoom မဖြစ်အောင် တားထားတာပါ
         } else {
             const options = {
-                series: [{ name: 'TRX Trend', data: candleData }],
+                series: [{ name: 'TRX Price', data: candleData }],
                 chart: {
                     type: 'candlestick',
                     height: 350,
                     id: 'trx-candles',
                     background: 'transparent',
-                    toolbar: {
-                        show: true,
-                        autoSelected: 'zoom',
-                        tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true }
-                    },
-                    zoom: { enabled: true, type: 'x', autoScaleYaxis: true }
+                    animations: { enabled: false },
+                    toolbar: { show: true, tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
+                    zoom: { enabled: true, type: 'x', autoScaleYaxis: false } // Y-axis ကို auto မချုံ့ခိုင်းတော့ပါ
                 },
-                plotOptions: {
-                    candlestick: {
-                        colors: { upward: '#22c55e', downward: '#ef4444' },
-                        wick: { useFillColor: true },
-                        candle: { width: { max: 15 } }
-                    }
-                },
+                plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' } } },
                 xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } } },
                 yaxis: {
-                    min: 1.0000, max: 1.0010,
-                    labels: { style: { colors: '#f1c40f' }, formatter: (val) => val.toFixed(5) }
+                    min: 0,
+                    max: 1000,
+                    tickAmount: 10,
+                    labels: { style: { colors: '#f1c40f' }, formatter: (val) => val.toFixed(0) }
                 },
                 grid: { borderColor: 'rgba(148, 163, 184, 0.1)' }
             };
