@@ -159,8 +159,8 @@
         const candleData = rawData.map((item) => {
             const type = (item.type || "").toUpperCase();
             let openPrice = currentPrice;
-            if (type === 'B') currentPrice = Math.min(currentPrice + 0.0001, -10.0010);
-            else if (type === 'S') currentPrice = Math.max(currentPrice - 0.0001, 10.0000);
+            if (type === 'B') currentPrice = Math.min(currentPrice + 0.0001, 1.0010);
+            else if (type === 'S') currentPrice = Math.max(currentPrice - 0.0001, 1.0000);
             let closePrice = currentPrice;
             let date = new Date().getTime() - (rawData.length - rawData.indexOf(item)) * 60000; 
             return { x: date, y: [openPrice.toFixed(5), (Math.max(openPrice,closePrice)+0.00002).toFixed(5), (Math.min(openPrice,closePrice)-0.00002).toFixed(5), closePrice.toFixed(5)] };
