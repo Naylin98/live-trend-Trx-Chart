@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRX Live - Modern UI</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; display: flex; justify-content: center; padding: 10px; color: #f8fafc; overflow-x: hidden; margin: 0; }
         .container { background: #1e293b; padding: 20px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; width: 100%; max-width: 1150px; border: 1px solid #334155; }
@@ -63,9 +66,44 @@
 
         canvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1; }
 
-        /* Candle Chart Styling */
-        #candleContainer { margin-top: 20px; background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 15px; border: 1px solid #334155; }
-        #candleCanvas { display: block; width: 100%; height: 250px; position: relative; }
+        /* --- ApexCharts Candle Styling --- */
+        #candleContainer {
+            margin-top: 20px;
+            background: rgba(15, 23, 42, 0.5); 
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid #334155;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #chartHeader {
+            color: #f1c40f;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            margin-bottom: 10px;
+        }
+
+        #apexCandleChart {
+            width: 100%;
+            height: 350px; /* Chart height တိုးလိုက်တယ် */
+        }
+
+        /* ApexCharts toolbar customization */
+        .apexcharts-toolbar {
+            top: -35px !important;
+            right: 10px !important;
+        }
+        .apexcharts-menu-icon, .apexcharts-zoom-icon, .apexcharts-zoomin-icon, .apexcharts-zoomout-icon, .apexcharts-reset-icon, .apexcharts-pan-icon {
+            transform: scale(0.8);
+            filter: invert(1) sepia(1) saturate(5) hue-rotate(15deg); /* Toolbar icons yellow color */
+        }
 
         .footer-info { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-top: 20px; border-top: 1px solid #334155; padding-top: 10px; }
     </style>
@@ -101,11 +139,11 @@
     </div>
 
     <div id="candleContainer">
-        <div style="color: #f1c40f; font-size: 12px; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+        <div id="chartHeader">
             <span style="display:inline-block; width:8px; height:8px; background:#f1c40f; border-radius:50%;"></span>
-            PREDICTION TREND VISUALIZER (B S)
+            TRX MW FX-STYLE TREND (B S)
         </div>
-        <canvas id="candleCanvas"></canvas>
+        <div id="apexCandleChart"></div>
     </div>
     
     <div class="footer-info">
@@ -117,6 +155,7 @@
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtHjuZ50vMa6S3WN3pyW2eF5qXH5tM8Obyry3sQcrQJ6-2e87aN1BR62f-q8lZ1I53/exec"; 
     let timeLeft = 60;
+    let candleChart = null; // Chart instance ကို သိမ်းရန်
 
     function loadTrendData() {
         const conn = document.getElementById('connection-status');
@@ -127,8 +166,8 @@
                     const displayData = rawData.slice().reverse();
                     renderModernChart(displayData); 
                     
-                    // Candle Chart Update
-                    drawStepCandleChartWithGlow(rawData);
+                    // --- FX Candle Chart Update (Step-based logic) ---
+                    renderApexCandleChart(rawData); 
 
                     // --- BIG/SMALL Alert Logic ---
                     const alertBox = document.getElementById('bigSmallAlert');
@@ -246,75 +285,120 @@
         }, 500);
     }
 
-    function drawStepCandleChartWithGlow(data) {
-        const canvas = document.getElementById('candleCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const container = document.getElementById('candleContainer');
-        
-        canvas.width = container.offsetWidth - 30;
-        canvas.height = 250; 
+    // --- ApexCharts Candle (Step-based & Thin Design) ---
+    function renderApexCandleChart(rawData) {
+        const chartElement = document.getElementById('apexCandleChart');
+        if (!chartElement) return;
 
-        const padding = 30;
-        const chartWidth = canvas.width - (padding * 2);
-        const chartHeight = canvas.height - (padding * 2);
-        const candleWidth = chartWidth / Math.max(data.length, 20); 
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Grid Lines
-        ctx.strokeStyle = "rgba(148, 163, 184, 0.05)";
-        ctx.lineWidth = 1;
-        for(let i=0; i<=10; i++) {
-            let y = padding + (i * (chartHeight/10));
-            ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(canvas.width-padding, y); ctx.stroke();
-        }
-
-        let currentLevel = 5; 
-        data.forEach((item, i) => {
+        // --- Data Preparation for Candle (Step-based Price) ---
+        // ဒေတာအဟောင်းကနေ အသစ်ကို အစဉ်လိုက်တွက်ချက်မယ်
+        let currentPrice = 1.0005; // အလယ်ကနေ စတင်မယ်
+        const candleData = rawData.map((item) => {
             const type = (item.type || "").toUpperCase();
-            const pred = (item.prediction || "").toUpperCase();
-            let prevLevel = currentLevel;
+            let openPrice = currentPrice;
 
-            if (type === 'B') currentLevel = Math.min(currentLevel + 1, 10);
-            else if (type === 'S') currentLevel = Math.max(currentLevel - 1, 0);
-
-            const x = padding + (i * candleWidth);
-            const yOpen = padding + chartHeight - (prevLevel * (chartHeight / 10));
-            const yClose = padding + chartHeight - (currentLevel * (chartHeight / 10));
-            
-            const isBullish = currentLevel >= prevLevel;
-            const isPredCorrect = (pred.endsWith('B') && type === 'B') || (pred.endsWith('S') && type === 'S');
-
-            const baseColor = isBullish ? "#22c55e" : "#ef4444";
-            
-            if (isPredCorrect) {
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = baseColor;
-                ctx.fillStyle = baseColor;
-                ctx.strokeStyle = baseColor;
-            } else {
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)";
-                ctx.strokeStyle = isBullish ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)";
+            if (type === 'B') {
+                currentPrice = Math.min(currentPrice + 0.0001, 1.0010); // B ဆိုရင် အပေါ်တက်
+            } else if (type === 'S') {
+                currentPrice = Math.max(currentPrice - 0.0001, 1.0000); // S ဆိုရင် အောက်ဆင်း
             }
+            let closePrice = currentPrice;
 
-            // Wick
-            ctx.beginPath();
-            ctx.moveTo(x + candleWidth/2, yOpen);
-            ctx.lineTo(x + candleWidth/2, yClose);
-            ctx.stroke();
+            // Step chart ဖြစ်တဲ့အတွက် High/Low ကို Open/Close ကြားထဲကပဲ ယူလိုက်မယ်
+            const highPrice = Math.max(openPrice, closePrice) + 0.00002; // thin wick appearance
+            const lowPrice = Math.min(openPrice, closePrice) - 0.00002;
 
-            // Body
-            const rectX = x + 3;
-            const rectY = Math.min(yOpen, yClose);
-            const rectW = Math.max(candleWidth - 6, 2);
-            const rectH = Math.max(Math.abs(yClose - yOpen), 4);
-
-            ctx.fillRect(rectX, rectY, rectW, rectH);
-            ctx.strokeRect(rectX, rectY, rectW, rectH);
-            ctx.shadowBlur = 0;
+            // Convert raw label (TRX Issue) to Date object for X-axis (fake time)
+            let date = new Date().getTime() - (rawData.length - rawData.indexOf(item)) * 60000; 
+            
+            return {
+                x: date,
+                y: [openPrice.toFixed(5), highPrice.toFixed(5), lowPrice.toFixed(5), closePrice.toFixed(5)]
+            };
         });
+
+        // --- Chart Options ---
+        const options = {
+            series: [{
+                name: 'TRX Trend',
+                data: candleData
+            }],
+            chart: {
+                type: 'candlestick',
+                height: 350,
+                id: 'trx-candles',
+                background: 'transparent',
+                toolbar: {
+                    show: true,
+                    autoSelected: 'zoom', // Default interaction is zoom
+                    tools: {
+                        download: false,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                },
+                animations: { enabled: false }, // Live update မှာ scroll မဖြစ်အောင်
+                zoom: {
+                    enabled: true,
+                    type: 'x', // Horizontal zoom
+                    autoScaleYaxis: true // Zoom လုပ်ရင် Y-axis ကို auto scale လုပ်မယ်
+                }
+            },
+            plotOptions: {
+                candlestick: {
+                    colors: {
+                        upward: '#22c55e', // Green for Bullish (B)
+                        downward: '#ef4444' // Red for Bearish (S)
+                    },
+                    wick: { useFillColor: true },
+                    candle: {
+                        width: {
+                            max: 15, // Candle အချောင်းလေးတွေ ကျဉ်းကျဉ်းလေးဖြစ်အောင်
+                        }
+                    }
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+                axisBorder: { show: true, color: '#334155' },
+                labels: {
+                    style: { colors: '#94a3b8', fontSize: '10px' },
+                    datetimeFormatter: { hour: 'HH:mm', minute: 'mm:ss' }
+                }
+            },
+            yaxis: {
+                tooltip: { enabled: true },
+                labels: {
+                    style: { colors: '#f1c40f', fontSize: '11px', fontWeight: 'bold' },
+                    formatter: (value) => value.toFixed(5) // FX style price format (1.0007)
+                },
+                tickAmount: 5, // Y-axis မှာ ၅ ကြောင်းပဲပြမယ်
+                min: 1.0000, max: 1.0010 // FX price range
+            },
+            grid: {
+                borderColor: 'rgba(148, 163, 184, 0.1)',
+                strokeDashArray: 3,
+            },
+            tooltip: {
+                theme: 'dark',
+                x: { format: 'HH:mm:ss' },
+                y: { title: { formatter: () => 'Price: ' } }
+            }
+        };
+
+        // --- Render or Update Chart ---
+        if (candleChart) {
+            // ဒေတာအသစ်ရောက်ရင် Update ပဲလုပ်မယ်
+            candleChart.updateSeries([{ data: candleData }]);
+        } else {
+            // စတင်တဲ့အချိန်မှာ အသစ်ဆွဲမယ်
+            candleChart = new ApexCharts(chartElement, options);
+            candleChart.render();
+        }
     }
 
     window.onload = () => { loadTrendData(); startTimer(); };
