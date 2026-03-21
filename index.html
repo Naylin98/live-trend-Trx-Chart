@@ -105,13 +105,38 @@
     }
 
     function startTimer() {
-        const timerDisplay = document.getElementById('countdown');
-        setInterval(() => {
-            timeLeft--;
-            timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
-            if (timeLeft <= 0) { timeLeft = 60; loadTrendData(); }
-        }, 1000);
-    }
+    const timerDisplay = document.getElementById('countdown');
+    const timerBox = document.querySelector('.timer-box'); // box အရောင်ပါ ပြောင်းဖို့
+
+    setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
+        
+        // --- ၁၀ စက္ကန့်အောက်ရောက်ရင် အရောင်ပြောင်းလဲမှု လုပ်ဆောင်ချက် ---
+        if (timeLeft <= 10) {
+            timerDisplay.style.color = "#ef4444"; // စာသားကို အနီရောင်ပြောင်း
+            timerBox.style.borderColor = "#ef4444"; // Box ဘောင်ကို အနီရောင်ပြောင်း
+            timerBox.style.boxShadow = "0 0 10px rgba(239, 68, 68, 0.5)"; // အနီရောင် အလင်းဖြာထွက်စေမယ်
+            
+            // ၅ စက္ကန့်အောက်ရောက်ရင် Blink (မိတ်တုပ်) ဖြစ်စေမယ်
+            if (timeLeft <= 5) {
+                timerDisplay.style.visibility = (timeLeft % 2 === 0) ? 'hidden' : 'visible';
+            }
+        } else {
+            // ပုံမှန် အခြေအနေ (၁၀ စက္ကန့်အထက်)
+            timerDisplay.style.color = "#f1c40f"; 
+            timerBox.style.borderColor = "#f1c40f";
+            timerBox.style.boxShadow = "none";
+            timerDisplay.style.visibility = 'visible';
+        }
+
+        if (timeLeft <= 0) {
+            timeLeft = 60;
+            loadTrendData(); // Data အသစ်ဆွဲတင်မယ်
+        }
+    }, 1000);
+}
+
 
     function getActiveClass(digit) {
         const d = parseInt(digit);
