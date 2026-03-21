@@ -350,58 +350,65 @@
                 }
             },
             plotOptions: {
-                candlestick: {
-                    colors: {
-                        upward: '#22c55e', // Green for Bullish (B)
-                        downward: '#ef4444' // Red for Bearish (S)
-                    },
-                    wick: { useFillColor: true },
-                    candle: {
-                        width: {
-                            max: 15, // Candle အချောင်းလေးတွေ ကျဉ်းကျဉ်းလေးဖြစ်အောင်
-                        }
-                    }
-                }
-            },
-            xaxis: {
-                type: 'datetime',
-                axisBorder: { show: true, color: '#334155' },
-                labels: {
-                    style: { colors: '#94a3b8', fontSize: '10px' },
-                    datetimeFormatter: { hour: 'HH:mm', minute: 'mm:ss' }
-                }
-            },
-            yaxis: {
-                tooltip: { enabled: true },
-                labels: {
-                    style: { colors: '#f1c40f', fontSize: '11px', fontWeight: 'bold' },
-                    formatter: (value) => value.toFixed(5) // FX style price format (1.0007)
-                },
-                
-                tickAmount: 5, // Y-axis မှာ ၅ ကြောင်းပဲပြမယ်
-                min: 1.0000, max: 1.0010 // FX price range
-            },
-            grid: {
-                borderColor: 'rgba(148, 163, 184, 0.1)',
-                strokeDashArray: 3,
-            },
-            tooltip: {
-                theme: 'dark',
-                x: { format: 'HH:mm:ss' },
-                y: { title: { formatter: () => 'Price: ' } }
-            }
-        };
+function renderApexCandleChart(rawData) {
+    const chartElement = document.getElementById('apexCandleChart');
+    if (!chartElement) return;
 
-        // --- Render or Update Chart ---
-        if (candleChart) {
-            // ဒေတာအသစ်ရောက်ရင် Update ပဲလုပ်မယ်
-            candleChart.updateSeries([{ data: candleData }],false);
-        } else {
-            // စတင်တဲ့အချိန်မှာ အသစ်ဆွဲမယ်
-            candleChart = new ApexCharts(chartElement, options);
-            candleChart.render();
-        }
+    let currentPrice = 1.0005;
+    const candleData = rawData.map((item) => {
+        const type = (item.type || "").toUpperCase();
+        let openPrice = currentPrice;
+        if (type === 'B') currentPrice = Math.min(currentPrice + 0.0001, 1.0010);
+        else if (type === 'S') currentPrice = Math.max(currentPrice - 0.0001, 1.0000);
+        let closePrice = currentPrice;
+        const highPrice = Math.max(openPrice, closePrice) + 0.00002;
+        const lowPrice = Math.min(openPrice, closePrice) - 0.00002;
+        let date = new Date().getTime() - (rawData.length - rawData.indexOf(item)) * 60000; 
+        return { x: date, y: [openPrice.toFixed(5), highPrice.toFixed(5), lowPrice.toFixed(5), closePrice.toFixed(5)] };
+    });
+
+    if (candleChart) {
+        // --- Zoom Level ကို ထိန်းထားဖို့ ဒီနည်းလမ်းကို သုံးပါ ---
+        candleChart.updateOptions({
+            series: [{ data: candleData }],
+            chart: {
+                animations: { enabled: false } // Refresh ဖြစ်ချိန်မှာ ခုန်မသွားအောင်
+            }
+        }, false, false, true); // true parameter က Viewport (Zoom) ကို မဖျက်ဖို့ ပြောတာပါ
+    } else {
+        const options = {
+            series: [{ name: 'TRX Trend', data: candleData }],
+            chart: {
+                type: 'candlestick',
+                height: 350,
+                id: 'trx-candles',
+                background: 'transparent',
+                toolbar: {
+                    show: true,
+                    autoSelected: 'zoom',
+                    tools: { download: false, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true }
+                },
+                zoom: { enabled: true, type: 'x', autoScaleYaxis: true }
+            },
+            plotOptions: {
+                candlestick: {
+                    colors: { upward: '#22c55e', downward: '#ef4444' },
+                    wick: { useFillColor: true },
+                    candle: { width: { max: 15 } }
+                }
+            },
+            xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } } },
+            yaxis: {
+                min: 1.0000, max: 1.0010,
+                labels: { style: { colors: '#f1c40f' }, formatter: (val) => val.toFixed(5) }
+            },
+            grid: { borderColor: 'rgba(148, 163, 184, 0.1)' }
+        };
+        candleChart = new ApexCharts(chartElement, options);
+        candleChart.render();
     }
+}
+
 
     window.onload = () => { loadTrendData(); startTimer(); };
 </script>
