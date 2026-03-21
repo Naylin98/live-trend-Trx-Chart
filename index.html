@@ -7,7 +7,37 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; display: flex; justify-content: center; padding: 10px; color: #f8fafc; overflow-x: hidden; margin: 0; }
         .container { background: #1e293b; padding: 20px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; width: 100%; max-width: 1150px; border: 1px solid #334155; }
-        .header { text-align: center; color: #f1c40f; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+        
+        /* Header & Timer Styling */
+        .header { 
+            position: relative; 
+            text-align: center; 
+            color: #f1c40f; 
+            margin-bottom: 20px; 
+            border-bottom: 1px solid #334155; 
+            padding-bottom: 15px; 
+            font-size: 20px; 
+            font-weight: bold; 
+            letter-spacing: 1px; 
+        }
+
+        .timer-box {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(15, 23, 42, 0.5);
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid #f1c40f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 50px;
+        }
+
+        #timer-label { font-size: 8px; color: #94a3b8; text-transform: uppercase; margin-bottom: -2px; }
+        #countdown { font-size: 16px; font-weight: bold; color: #f1c40f; font-family: monospace; }
 
         .dashboard-labels { display: flex; align-items: center; background: #1e293b; padding: 12px 0; border-bottom: 2px solid #334155; font-size: 13px; font-weight: bold; color: #f1c40f; text-transform: uppercase; position: sticky; top: 0; z-index: 100; }
         .lbl-trx { width: 130px; text-align: center; }
@@ -17,7 +47,7 @@
         .row-grid { display: flex; align-items: center; height: 45px; border-bottom: 1px solid #334155; position: relative; z-index: 5; }
         .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
         
-        .cells { display: flex; flex: 0 0 auto; width: 320px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
+        .cells { display: flex; flex: 0 0 auto; width: 350px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
         .cell { width: 26px; height: 26px; line-height: 26px; text-align: center; font-weight: bold; color: #475569; font-size: 14px; border-radius: 50%; z-index: 10; background: rgba(255,255,255,0.05); }
         
         .active-green { background-color: #22c55e !important; color: white !important; box-shadow: 0 0 10px rgba(34, 197, 94, 0.5); }
@@ -43,7 +73,13 @@
 <body>
 
 <div class="container" id="chartBox">
-    <div class="header">TRX MW MODERN TREND (LIVE)</div>
+    <div class="header">
+        TRX MW MODERN TREND (LIVE)
+        <div class="timer-box">
+            <span id="timer-label">Next</span>
+            <div id="countdown">60s</div>
+        </div>
+    </div>
     
     <div class="dashboard-labels">
         <div class="lbl-trx">TRX ISSUE</div>
@@ -59,40 +95,54 @@
 
     <canvas id="lineCanvas"></canvas>
     <div id="chartData">
-        <div style="text-align: center; padding: 40px; color: #94a3b8;">?? Loading Live Data...</div>
+        <div style="text-align: center; padding: 40px; color: #94a3b8;"> Loading Live Data...</div>
     </div>
     
     <div class="footer-info">
-        <div id="connection-status">? Initializing...</div>
+        <div id="connection-status"> Initializing...</div>
         <div id="last-update">Last Update: --:--:--</div>
     </div>
 </div>
 
 <script>
-    const REFRESH_INTERVAL = 5000;
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtHjuZ50vMa6S3WN3pyW2eF5qXH5tM8Obyry3sQcrQJ6-2e87aN1BR62f-q8lZ1I53/exec"; 
+    let timeLeft = 60;
 
-   // ????????? ??????? Web App URL ??? ??????????????
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtHjuZ50vMa6S3WN3pyW2eF5qXH5tM8Obyry3sQcrQJ6-2e87aN1BR62f-q8lZ1I53/exec"; 
-
-function loadTrendData() {
-    const conn = document.getElementById('connection-status');
-    // window.location.href ???? WEB_APP_URL ??? ?????????????
-    fetch(WEB_APP_URL + "?action=getRawData") 
-        .then(res => res.json())
-        
-            // ... (??????? code ???? ?????????)
+    function loadTrendData() {
+        const conn = document.getElementById('connection-status');
+        fetch(WEB_APP_URL + "?action=getRawData") 
+            .then(res => res.json())
             .then(rawData => {
                 if (rawData && rawData.length > 0) {
                     renderModernChart(rawData.reverse()); 
                     document.getElementById('last-update').innerText = "Last Update: " + new Date().toLocaleTimeString();
-                    conn.innerText = "? Connected (Live)";
+                    conn.innerText = " Connected (Live)";
                     conn.style.color = "#22c55e";
                 }
             })
             .catch(err => {
-                conn.innerText = "? Connection Error (Check Deployment)";
+                conn.innerText = " Connection Error (Check Deployment)";
                 conn.style.color = "#ef4444";
             });
+    }
+
+    function startTimer() {
+        const timerDisplay = document.getElementById('countdown');
+        setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = (timeLeft < 10 ? "0" + timeLeft : timeLeft) + "s";
+            
+            if (timeLeft <= 10) {
+                timerDisplay.style.color = "#ef4444"; // ၁၀ စက္ကန့်အောက်ရောက်ရင် အရောင်နီမယ်
+            } else {
+                timerDisplay.style.color = "#f1c40f";
+            }
+
+            if (timeLeft <= 0) {
+                timeLeft = 60;
+                loadTrendData(); // ၀ ရောက်တာနဲ့ Data update မယ်
+            }
+        }, 1000);
     }
 
     function getActiveClass(digit) {
@@ -157,8 +207,10 @@ function loadTrendData() {
         }, 500);
     }
 
-    window.onload = loadTrendData;
-    setInterval(loadTrendData, REFRESH_INTERVAL);
+    window.onload = () => {
+        loadTrendData();
+        startTimer();
+    };
 </script>
 </body>
 </html>
