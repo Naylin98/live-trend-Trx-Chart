@@ -43,7 +43,19 @@
 
         .row-grid { display: flex; align-items: center; height: 45px; border-bottom: 1px solid #334155; position: relative; z-index: 5; }
         #chartData .row-grid:nth-child(10) { background: rgba(248, 250, 252, 0.08); border-left: 3px solid #f1c40f; }
+#chartData {
+    max-height: 450px; /* အကြောင်း ၁၀ ကြောင်းစာ ခန့်မှန်းအမြင့် */
+    overflow-y: auto;  /* ၁၀ ကြောင်းကျော်ရင် scroll ပေါ်လာမယ် */
+}
 
+/* Scrollbar ကို ပိုလှအောင် လုပ်နည်း */
+#chartData::-webkit-scrollbar {
+    width: 6px;
+}
+#chartData::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 10px;
+}
         .row-label { width: 130px; font-size: 14px; color: #94a3b8; text-align: center; font-family: monospace; }
         .cells { display: flex; flex: 0 0 auto; width: 350px; justify-content: center; gap: 4px; padding: 0 10px; align-items: center; border-left: 1px solid #334155; }
         .cell { width: 26px; height: 26px; line-height: 26px; text-align: center; font-weight: bold; color: #475569; font-size: 14px; border-radius: 50%; z-index: 10; background: rgba(255,255,255,0.05); }
