@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRX Live - Modern UI</title>
-     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
 
     <style>
@@ -179,7 +179,7 @@
                     renderModernChart(displayData); 
                     
                     // --- FX Candle Chart Update (Step-based logic) ---
-                    renderLightweightChart(rawData); 
+                    renderApexCandleChart(rawData); 
 
                     // --- BIG/SMALL Alert Logic ---
                     const alertBox = document.getElementById('bigSmallAlert');
@@ -297,109 +297,86 @@
         }, 500);
     }
 
-let chart;
-let candleSeries;
-let userZoomed = false; // User ရဲ့ Zoom level ကို မှတ်ထားဖို့
+function renderApexCandleChart(rawData) {
+    const chartElement = document.getElementById('apexCandleChart');
+    if (!chartElement) return;
 
-function renderLightweightChart(rawData) {
-    const chartElement = document.getElementById('apexCandleChart'); // Container ID
-    if (!chartElement || !rawData || rawData.length === 0) return;
-
-    // --- ၁။ Chart ကို တစ်ကြိမ်ပဲ Create လုပ်မယ် ---
-    if (!chart) {
-        chart = LightweightCharts.createChart(chartElement, {
-            width: chartElement.clientWidth,
-            height: 400,
-            layout: {
-                background: { color: '#0f172a' },
-                textColor: '#cbd5e1',
-            },
-            grid: {
-                vertLines: { color: 'rgba(51, 65, 85, 0.5)' },
-                horzLines: { color: 'rgba(51, 65, 85, 0.5)' },
-            },
-            rightPriceScale: {
-                borderColor: '#334155',
-                autoScale: true,
-                mode: LightweightCharts.PriceScaleMode.Normal,
-            },
-            timeScale: {
-                borderColor: '#334155',
-                timeVisible: true,
-                barSpacing: 10,
-                rightOffset: 12, // ညာဘက်မှာ နေရာလွတ်ထားပေးခြင်း (MT5 style)
-            },
-            // MT5 လိုမျိုး Mouse နဲ့ scale ဆွဲလို့ရအောင် handle များ
-            handleScroll: {
-                mouseWheel: true,
-                pressedMouseMove: true,
-                horzTouchDrag: true,
-                vertTouchDrag: true,
-            },
-            handleScale: {
-                axisPressedMouseMove: true, // ဈေးတန်းကို ဆွဲပြီး ချုံ့/ချဲ့ လုပ်လို့ရမယ်
-                mouseWheel: true,
-            },
-        });
-
-        candleSeries = chart.addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            borderUpColor: '#26a69a',
-            borderDownColor: '#ef5350',
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
-        });
-
-        // User က Zoom/Pan လုပ်လိုက်ရင် auto-fit ကို ခေတ္တရပ်ထားဖို့
-        chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-            userZoomed = true;
-        });
-    }
-
-    // --- ၂။ Data Processing (သင်၏ မူလ Logic အတိုင်း) ---
-    const basePrice = 10000.00;
-    const bodySize = 0.05;
-    let currentPrice = basePrice;
-
-    // Lightweight Charts အတွက် data ကို ရှေးကျရာမှ နောက်ဆုံးအထိ အစဉ်လိုက်ဖြစ်အောင် စီစဉ်ခြင်း
-    // rawData က နောက်ဆုံး issue အပေါ်မှာရှိနေရင် reverse() လုပ်ဖို့လိုပါမယ်
-    const candleData = rawData.slice().reverse().map((item, index) => {
+    // --- Data Processing (အရင်အတိုင်းပဲ ထားပါ) ---
+    const basePrice = 10000.00; 
+    const bodySize = 0.05; 
+    let currentPrice = basePrice; 
+    const candleData = rawData.map((item, index) => {
         const type = (item.type || "").toUpperCase();
         let open = currentPrice;
-
         if (type === 'B') currentPrice += bodySize;
         else currentPrice -= bodySize;
-
         let close = currentPrice;
         let high = Math.max(open, close) + 0.01;
         let low = Math.min(open, close) - 0.01;
-
-        return {
-            time: index, // ပိုသေချာစေရန် index ကိုပဲ သုံးပါမယ်
-            open: parseFloat(open.toFixed(2)),
-            high: parseFloat(high.toFixed(2)),
-            low: parseFloat(low.toFixed(2)),
-            close: parseFloat(close.toFixed(2))
-        };
+        let timestamp = new Date().getTime() - (rawData.length - index) * 60000;
+        return { x: timestamp, y: [open.toFixed(2), high.toFixed(2), low.toFixed(2), close.toFixed(2)] };
     });
 
-    // --- ၃။ Chart ကို Update လုပ်ခြင်း ---
-    candleSeries.setData(candleData);
+    const liveColor = (currentPrice >= candleData[candleData.length-1].y[0]) ? '#26a69a' : '#ef5350';
 
-    // ပထမဆုံးအကြိမ်မှာပဲ အကုန်ပြမယ်၊ နောက်ပိုင်းမှာ User Zoom ကို လေးစားမယ်
-    if (!userZoomed) {
-        chart.timeScale().fitContent();
+    // --- Chart Options ပြင်ဆင်မှု ---
+    const options = {
+        series: [{ name: 'TRX/USDT', data: candleData }],
+        chart: {
+            type: 'candlestick',
+            height: 400,
+            id: 'trx-candles',
+            background: 'transparent',
+            // Zoom နဲ့ Pan လုပ်နိုင်အောင် Tool တွေကို ဖွင့်ပေးခြင်း
+            toolbar: {
+                show: true,
+                tools: {
+                    download: false,
+                    selection: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true, // လက်ဝါးပုံစံနဲ့ ဘေးတိုက်ရွေ့လို့ရအောင်
+                    reset: true
+                },
+                autoSelected: 'pan' // Mouse နဲ့ ဖိဆွဲရင် ရွေ့သွားအောင် 'pan' ကို default ထားခြင်း
+            },
+            animations: { enabled: false } // Reset ဖြစ်တာ သက်သာအောင် animation ပိတ်ထားခြင်း
+        },
+        yaxis: {
+            opposite: true,
+            labels: { style: { colors: '#cbd5e1' } },
+            // မြင်ကွင်းထဲရှိ candle အနိမ့်အမြင့်အလိုက် ဈေးတန်းကို auto ညှိပေးခြင်း
+            forceNiceScale: true,
+            tooltip: { enabled: true }
+        },
+        xaxis: { 
+            type: 'datetime', 
+            labels: { style: { colors: '#94a3b8' } },
+            axisBorder: { show: false }
+        },
+        // မြင်ကွင်းထဲက Candle အလိုက် ဈေးတန်း (Y-axis) ကို လိုက်ပြောင်းပေးဖို့
+        grid: { borderColor: '#334155' }
+    };
+
+    if (candleChart) {
+        // အရေးကြီးဆုံးအပိုင်း - update လုပ်တဲ့အခါ လက်ရှိ Zoom level ကို မဖျက်ဖို့ 
+        // updateOptions(options, redoSelection, animate, updateSyncedCharts)
+        candleChart.updateOptions({
+            series: [{ data: candleData }],
+            annotations: {
+                yaxis: [{
+                    y: currentPrice,
+                    borderColor: liveColor,
+                    label: { text: currentPrice.toFixed(2), style: { background: liveColor, color: '#fff' } }
+                }]
+            }
+        }, false, false, false); // နောက်ဆုံးက false သည် resetZoom မဖြစ်အောင် တားပေးတာပါ
+    } else {
+        candleChart = new ApexCharts(chartElement, options);
+        candleChart.render();
     }
 }
-
-// Window resize ဖြစ်ရင် Chart ကို width လိုက်ညှိပေးဖို့
-window.addEventListener('resize', () => {
-    if (chart) {
-        const chartElement = document.getElementById('apexCandleChart');
-        chart.applyOptions({ width: chartElement.clientWidth });
-    }
-});
     window.onload = () => { loadTrendData(); startTimer(); };
 </script>
 </body>
