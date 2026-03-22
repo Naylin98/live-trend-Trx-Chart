@@ -406,6 +406,8 @@ window.addEventListener('resize', () => {
         chart.applyOptions({ width: document.getElementById('apexCandleChart').offsetWidth });
     }
 });
+    window.onload = () => { loadTrendData(); startTimer(); };
 </script>
 </body>
 </html>
+
