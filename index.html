@@ -175,7 +175,7 @@
             .then(res => res.json())
             .then(rawData => {
                 if (rawData && rawData.length > 0) {
-                    const displayData = rawData.slice().reverse().slice(0, 10);
+                    const displayData = rawData.slice().reverse().slice(0, 15);
                     renderModernChart(displayData); 
                     
                     // --- FX Candle Chart Update (Step-based logic) ---
