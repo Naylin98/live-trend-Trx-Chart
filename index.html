@@ -323,49 +323,64 @@
         const isBullish = parseFloat(lastCandle.y[3]) >= parseFloat(lastCandle.y[0]);
         const liveLineColor = isBullish ? '#26a69a' : '#ef5350';
 
-        const options = {
-            series: [{ name: 'TRX/USDT', data: candleData }],
-            chart: {
-                type: 'candlestick',
-                height: 350,
-                id: 'trx-candles',
-                background: 'transparent',
-                animations: { enabled: true, speed: 300 },
-                toolbar: { show: true }
+        // --- Chart Options ပြင်ဆင်မှု ---
+    const options = {
+        series: [{ name: 'TRX/USDT', data: candleData }],
+        chart: {
+            type: 'candlestick',
+            height: 400,
+            id: 'trx-candles',
+            background: 'transparent',
+            // Zoom နဲ့ Pan လုပ်နိုင်အောင် Tool တွေကို ဖွင့်ပေးခြင်း
+            toolbar: {
+                show: true,
+                tools: {
+                    download: false,
+                    selection: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true, // လက်ဝါးပုံစံနဲ့ ဘေးတိုက်ရွေ့လို့ရအောင်
+                    reset: true
+                },
+                autoSelected: 'pan' // Mouse နဲ့ ဖိဆွဲရင် ရွေ့သွားအောင် 'pan' ကို default ထားခြင်း
             },
-            plotOptions: {
-                candlestick: {
-                    colors: { upward: '#26a69a', downward: '#ef5350' },
-                    wick: { useFillColor: true }
-                }
-            },
-            xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } } },
-            yaxis: {
-                opposite: true,
-                labels: { style: { colors: '#cbd5e1' }, formatter: (val) => val.toFixed(2) }
-            },
-            grid: { borderColor: '#334155', strokeDashArray: 3 },
+            animations: { enabled: false } // Reset ဖြစ်တာ သက်သာအောင် animation ပိတ်ထားခြင်း
+        },
+        yaxis: {
+            opposite: true,
+            labels: { style: { colors: '#cbd5e1' } },
+            // မြင်ကွင်းထဲရှိ candle အနိမ့်အမြင့်အလိုက် ဈေးတန်းကို auto ညှိပေးခြင်း
+            forceNiceScale: true,
+            tooltip: { enabled: true }
+        },
+        xaxis: { 
+            type: 'datetime', 
+            labels: { style: { colors: '#94a3b8' } },
+            axisBorder: { show: false }
+        },
+        // မြင်ကွင်းထဲက Candle အလိုက် ဈေးတန်း (Y-axis) ကို လိုက်ပြောင်းပေးဖို့
+        grid: { borderColor: '#334155' }
+    };
+
+    if (candleChart) {
+        // အရေးကြီးဆုံးအပိုင်း - update လုပ်တဲ့အခါ လက်ရှိ Zoom level ကို မဖျက်ဖို့ 
+        // updateOptions(options, redoSelection, animate, updateSyncedCharts)
+        candleChart.updateOptions({
+            series: [{ data: candleData }],
             annotations: {
                 yaxis: [{
                     y: currentPrice,
-                    borderColor: liveLineColor,
-                    label: {
-                        borderColor: liveLineColor,
-                        style: { color: '#fff', background: liveLineColor },
-                        text: currentPrice.toFixed(2),
-                        position: 'right'
-                    }
+                    borderColor: liveColor,
+                    label: { text: currentPrice.toFixed(2), style: { background: liveColor, color: '#fff' } }
                 }]
             }
-        };
-
-        if (candleChart) {
-            candleChart.updateOptions(options, false, false);
-        } else {
-            candleChart = new ApexCharts(chartElement, options);
-            candleChart.render();
-        }
+        }, false, false, false); // နောက်ဆုံးက false သည် resetZoom မဖြစ်အောင် တားပေးတာပါ
+    } else {
+        candleChart = new ApexCharts(chartElement, options);
+        candleChart.render();
     }
+}
 
     window.onload = () => { loadTrendData(); startTimer(); };
 </script>
