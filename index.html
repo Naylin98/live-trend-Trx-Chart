@@ -297,27 +297,27 @@
         }, 500);
     }
 
-    // --- Lightweight Charts (TradingView Library) Implementation ---
+// --- Lightweight Charts Implementation ---
 let chart;
 let candleSeries;
-let userZoomed = false; // User က Zoom/Pan လုပ်ထားသလား မှတ်ရန်
+let userZoomed = false; 
 
 function renderLightweightChart(rawData) {
-    const chartElement = document.getElementById('apexCandleChart'); // ID အဟောင်းအတိုင်းပဲ သုံးထားပါတယ်
+    const chartElement = document.getElementById('apexCandleChart');
     if (!chartElement) return;
 
-    // --- ၁။ Chart ကို ပထမဆုံးအကြိမ်ပဲ Create လုပ်မယ် ---
+    // ၁။ Chart ကို တစ်ကြိမ်ပဲ တည်ဆောက်ခြင်း
     if (!chart) {
         chart = LightweightCharts.createChart(chartElement, {
-            width: chartElement.offsetWidth,
+            width: chartElement.clientWidth, // offsetWidth ထက် clientWidth က ပိုတိကျပါတယ်
             height: 400,
             layout: {
-                background: { color: 'transparent' },
+                background: { color: '#0f172a' }, // Dark theme အမှန်
                 textColor: '#cbd5e1',
             },
             grid: {
-                vertLines: { color: '#334155' },
-                horzLines: { color: '#334155' },
+                vertLines: { color: 'rgba(51, 65, 85, 0.5)' },
+                horzLines: { color: 'rgba(51, 65, 85, 0.5)' },
             },
             rightPriceScale: {
                 borderColor: '#334155',
@@ -328,10 +328,8 @@ function renderLightweightChart(rawData) {
                 borderColor: '#334155',
                 timeVisible: true,
                 barSpacing: 10,
-                shiftVisibleRangeOnNewBar: true, // အသစ်ဝင်လာရင် ညာဘက်ကို တိုးသွားမယ်
-                rightOffset: 15, // ညာဘက်မှာ နေရာလွတ် ချန်ထားမယ်
+                rightOffset: 12, // ညာဘက်မှာ နေရာလွတ်ထားပေးခြင်း (MT5 style)
             },
-            // MT5 လိုမျိုး ဆွဲလို့ရအောင် Handle ပြင်ဆင်ခြင်း
             handleScroll: {
                 mouseWheel: true,
                 pressedMouseMove: true,
@@ -339,7 +337,7 @@ function renderLightweightChart(rawData) {
                 vertTouchDrag: true,
             },
             handleScale: {
-                axisPressedMouseMove: true, // ဈေးတန်းကို ဆွဲပြီး scale ချုံ့/ချဲ့ လုပ်လို့ရမယ်
+                axisPressedMouseMove: true, // Price scale ကို ဆွဲလို့ရစေဖို့
                 mouseWheel: true,
             },
         });
@@ -353,17 +351,19 @@ function renderLightweightChart(rawData) {
             wickDownColor: '#ef5350',
         });
 
-        // User က Zoom ဆွဲလိုက်ရင် auto-fit ကို ခေတ္တရပ်ထားဖို့
+        // User က chart ကို ရွှေ့လိုက်ရင် auto-fit မဖြစ်အောင် တားခြင်း
         chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
             userZoomed = true;
         });
     }
 
-    // --- ၂။ Data Processing (ApexCharts မှာ သုံးခဲ့တဲ့ logic အတိုင်း) ---
+    // ၂။ Data Processing Logic
     const basePrice = 10000.00;
     const bodySize = 0.05;
     let currentPrice = basePrice;
 
+    // အချိန်ကို ရှေ့နောက် မလွဲအောင် တွက်ချက်ခြင်း
+    const now = Math.floor(Date.now() / 1000);
     const candleData = rawData.map((item, index) => {
         const type = (item.type || "").toUpperCase();
         let open = currentPrice;
@@ -372,14 +372,11 @@ function renderLightweightChart(rawData) {
         else currentPrice -= bodySize;
 
         let close = currentPrice;
-        let wickSize = 0.01; // ApexCharts မှာသုံးခဲ့တဲ့ 0.01
-        let high = Math.max(open, close) + wickSize;
-        let low = Math.min(open, close) - wickSize;
+        let high = Math.max(open, close) + 0.01;
+        let low = Math.min(open, close) - 0.01;
 
-        // Lightweight Charts သည် time ကို unix timestamp (seconds) သို့မဟုတ် index သုံးရပါတယ်
-        // ဒီမှာ index (index) ကိုပဲ သုံးပါမယ် (သို့မဟုတ် အချိန်ကို နေ့စွဲအဖြစ် သုံးနိုင်ပါတယ်)
         return {
-            time: (new Date().getTime() / 1000) - (rawData.length - index) * 60, 
+            time: now - (rawData.length - index) * 60, // ၁ မိနစ်ခြားစီ ပြခြင်း
             open: parseFloat(open.toFixed(2)),
             high: parseFloat(high.toFixed(2)),
             low: parseFloat(low.toFixed(2)),
@@ -387,26 +384,28 @@ function renderLightweightChart(rawData) {
         };
     });
 
-    // --- ၃။ Chart ကို Update လုပ်ခြင်း ---
+    // ၃။ Update Data
     candleSeries.setData(candleData);
 
-    // ပထမဆုံးအကြိမ်မှာပဲ အကုန်ပြမယ်၊ နောက်ပိုင်းမှာ User Zoom ကို လေးစားမယ်
+    // ပထမဆုံး load ဖြစ်ချိန်မှာပဲ အကုန်ပြမယ်
     if (!userZoomed) {
         chart.timeScale().fitContent();
     }
-
-    // Live Price Line အတွက် Label ပြင်ဆင်ခြင်း
-    const liveColor = (currentPrice >= candleData[candleData.length - 1].open) ? '#26a69a' : '#ef5350';
-    // Lightweight chart မှာ price line က auto ပါဝင်ပြီးသားဖြစ်ပါတယ်
 }
 
-// Window resize ဖြစ်ရင် Chart ကို width လိုက်ညှိပေးဖို့
+// Window resize handling
 window.addEventListener('resize', () => {
     if (chart) {
-        chart.applyOptions({ width: document.getElementById('apexCandleChart').offsetWidth });
+        const chartElement = document.getElementById('apexCandleChart');
+        chart.applyOptions({ width: chartElement.clientWidth });
     }
-}
-    window.onload = () => { loadTrendData(); startTimer(); };
+});
+
+// Initialization
+window.onload = () => { 
+    loadTrendData(); 
+    if(typeof startTimer === "function") startTimer(); 
+};
 </script>
 </body>
 </html>
