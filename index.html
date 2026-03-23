@@ -166,7 +166,7 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtHjuZ50vMa6S3WN3pyW2eF5qXH5tM8Obyry3sQcrQJ6-2e87aN1BR62f-q8lZ1I53/exec"; 
-    let timeLeft = 60;
+    let timeLeft = 10;
     let candleChart = null; // Chart instance ကို သိမ်းရန်
 
     function loadTrendData() {
@@ -227,7 +227,7 @@
             }
 
             if (timeLeft <= 0) {
-                timeLeft = 60;
+                timeLeft = 10;
                 loadTrendData();
             }
         }, 1000);
