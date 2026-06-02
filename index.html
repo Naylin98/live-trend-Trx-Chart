@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Live Chart Pro (Permanent Arrow & Fading Text)</title>
+    <title>Advanced Live Chart Pro (Fully Draggable Drawings)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     
@@ -30,29 +30,24 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(0, 230, 118, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); } }
 
         .controls-wrapper { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
-        .tf-toolbar, .toolbar { display: flex; gap: 4px; background: #1e222d; padding: 4px; border-radius: 6px; border: 1px solid #2b313f; }
+        .tf-toolbar, .toolbar { display: flex; gap: 4px; background: #1e222d; padding: 4px; border-radius: 6px; border: 1px solid #2b313f; align-items: center; }
         
         .btn { background: transparent; border: none; color: #b2b5be; padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: 500; border-radius: 4px; transition: 0.2s; }
         .btn:hover { color: #d1d4dc; background: #2a2e39; }
         .btn.active { background: #2962ff; color: white; }
         #status-badge { padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; background-color: #2a2e39; color: #b2b5be; }
         
-        .chart-wrapper { 
-            position: relative; flex-grow: 1; 
-            border-radius: 6px; border: 1px solid #2b313f; 
-            background-color: #131722; overflow: hidden; 
-        }
+        .chart-wrapper { position: relative; flex-grow: 1; border-radius: 6px; border: 1px solid #2b313f; background-color: #131722; overflow: hidden; }
         
         .main-pane { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: height 0.1s ease; }
         .rsi-pane { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; border-top: 2px solid #2b313f; display: none; background-color: #131722; transition: height 0.1s ease; }
 
-        #main-chart, #rsi-chart { width: 100%; height: 100%; }
+        #main-chart, #rsi-chart { width: 100%; height: 100%; user-select: none; }
 
         .tv-zoom-tools {
             position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 4px; background: rgba(30, 34, 45, 0.85); padding: 4px;
-            border-radius: 8px; border: 1px solid #2b313f; z-index: 15;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            border-radius: 8px; border: 1px solid #2b313f; z-index: 15; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(4px);
         }
         .tv-zoom-tools button {
             background: transparent; color: #b2b5be; border: none; padding: 4px 14px;
@@ -65,29 +60,24 @@
             display: flex; justify-content: center; align-items: center; font-size: 18px; color: #2962ff; z-index: 20; font-weight: bold;
         }
 
-        /* စာသားမိန်လိုက်လင်းလိုက် ဖြစ်စေမည့် Animation ပါးပါးလေး */
-        @keyframes subtleFading {
-            0% { opacity: 0.2; }
-            50% { opacity: 1.0; }
-            100% { opacity: 0.2; }
-        }
+        @keyframes subtleFading { 0% { opacity: 0.2; } 50% { opacity: 1.0; } 100% { opacity: 0.2; } }
 
-        /* 🟢 ပြင်ဆင်ထားသောနေရာ: နောက်ခံ Container လုံးဝမပါဝင်သော စာသားဗလာပုံစံ */
         #active-trend-alert {
-            position: absolute;
-            font-size: 11px; 
-            font-weight: bold; 
-            display: none;
-            z-index: 25;
-            pointer-events: none; 
-            white-space: nowrap;
-            background: transparent; /* Container ဖြုတ်ထားသည် */
-            border: none;             /* ဘောင်လိုင်း ဖြုတ်ထားသည် */
-            box-shadow: none;         /* အရိပ် ဖြုတ်ထားသည် */
-            color: #ffffff;           /* စာသားဖြူသီးသန့် */
-            padding: 0;
+            position: absolute; font-size: 11px; font-weight: bold; display: none; z-index: 25;
+            pointer-events: none; white-space: nowrap; background: transparent; border: none; box-shadow: none; color: #ffffff; padding: 0;
             animation: subtleFading 1.6s infinite ease-in-out; 
         }
+
+        .fibo-handle {
+            position: absolute; width: 10px; height: 10px; background-color: #2962ff;
+            border: 2px solid #ffffff; border-radius: 50%; display: none; z-index: 35;
+            cursor: move; transform: translate(-5px, -5px); box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .color-tool-wrap { display: flex; align-items: center; gap: 6px; padding: 0 5px; }
+        .color-tool-wrap label { font-size: 11px; color: #787b86; }
+        .color-input { width: 22px; height: 22px; border: none; background: transparent; cursor: pointer; padding: 0; }
+        .opacity-slider { width: 50px; height: 4px; accent-color: #2962ff; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -113,9 +103,18 @@
             <div class="toolbar">
                 <button id="pointer-btn" class="btn active" title="Select & Move">↖️ Select</button>
                 <button id="draw-btn" class="btn" title="Draw Trend Line">✏️ Line</button>
-                <button id="fibo-btn" class="btn" title="Draw Fibonacci">📏 Fibo</button>
+                <button id="fibo-btn" class="btn" title="Draw Professional Fibo">📏 Fibo</button>
+                <button id="rect-btn" class="btn" title="Draw Rectangle/Box">⬜ Box</button>
+                
+                <div style="width: 1px; background: #2b313f; margin: 0 3px; height: 20px;"></div>
+                <div class="color-tool-wrap">
+                    <input type="color" id="shape-color" class="color-input" value="#2962ff" title="Change Border & Fill Color">
+                    <input type="range" id="shape-opacity" class="opacity-slider" min="0" max="1" step="0.05" value="0.25" title="Adjust Transparency">
+                </div>
+
+                <div style="width: 1px; background: #2b313f; margin: 0 3px; height: 20px;"></div>
                 <button id="clear-btn" class="btn" title="Clear Drawings">🗑️ Clear</button>
-                <div style="width: 1px; background: #2b313f; margin: 0 5px;"></div>
+                <div style="width: 1px; background: #2b313f; margin: 0 5px; height: 20px;"></div>
                 <button id="ma-btn" class="btn active" title="Toggle Moving Average">📈 MA (50)</button>
                 <button id="rsi-btn" class="btn" title="Toggle RSI">📊 RSI</button>
             </div>
@@ -125,7 +124,14 @@
     <div class="chart-wrapper" id="wrapper">
         <div class="main-pane" id="main-pane">
             <div id="main-chart"></div>
+            
+            <svg id="svg-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></svg>
+            
             <div id="active-trend-alert">Trend condition</div>
+            
+            <div id="handle-a" class="fibo-handle"></div>
+            <div id="handle-b" class="fibo-handle"></div>
+
             <div class="tv-zoom-tools" id="zoom-tools">
                 <button id="zoom-out" title="Zoom Out">−</button>
                 <button id="zoom-reset" title="Reset View" style="font-size: 14px;">↻</button>
@@ -143,17 +149,19 @@
         const wrapper = document.getElementById('wrapper');
         const mainPane = document.getElementById('main-pane');
         const mainContainer = document.getElementById('main-chart');
-        
         const rsiPane = document.getElementById('rsi-pane');
         const rsiContainer = document.getElementById('rsi-chart');
-        
         const activeTrendAlert = document.getElementById('active-trend-alert'); 
+        const svgOverlay = document.getElementById('svg-overlay');
+        
+        const handleA = document.getElementById('handle-a');
+        const handleB = document.getElementById('handle-b');
 
         let globalDataMap = new Map(); 
         let currentTimeframe = 60; 
         let latestCandlesGlobal = []; 
         let currentTrendDir = ''; 
-        let alertMarkersMap = new Map(); // 🟢 Trigger ဖြစ်ခဲ့ဖူးသော Trend များကို သိမ်းဆည်းရန် Map
+        let alertMarkersMap = new Map(); 
 
         const commonOptions = {
             layout: { background: { type: 'solid', color: '#131722' }, textColor: '#d1d4dc' },
@@ -164,7 +172,6 @@
 
         const chart = LightweightCharts.createChart(mainContainer, { ...commonOptions, rightPriceScale: { borderColor: '#2b313f', autoScale: true } });
         const candleSeries = chart.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350' });
-        
         const maSeries = chart.addLineSeries({ color: '#ff9800', lineWidth: 2, title: 'SMA 50' });
 
         const rsiChart = LightweightCharts.createChart(rsiContainer, { ...commonOptions, rightPriceScale: { borderColor: '#2b313f' } });
@@ -179,160 +186,426 @@
         let isSyncing = false;
         let alertTimeout = null; 
 
-        // 🟢 ပြင်ဆင်ထားသောနေရာ: စာသားသက်သက်ကို Native Arrow ရဲ့ အပေါ်/အောက် နားတွင် ကပ်လျက်တည်ရှိစေရန် Logic
+        // Drawing Engine variables
+        let currentMode = 'pointer'; 
+        let drawings = []; 
+        let selectedDrawing = null; 
+        let activeHandle = null; 
+        
+        let drawStartPoint = null; 
+        let currentMousePos = null;
+        let previewSeries = null; 
+        let isDrawing = false;
+        let createdPriceLines = []; 
+
+        // Fully Draggable Engine States
+        let isDraggingObject = false;
+        let draggedDrawing = null;
+        let dragStartMouse = null;
+        let dragStartStart = null;
+        let dragStartEnd = null;
+
+        const fiboLevelsConfig = [
+            { v: -0.272, c: '#ff5252', n: '-0.272' },
+            { v: 0,      c: '#787b86', n: '0.0 (Start)' },
+            { v: 0.236,  c: '#f44336', n: '0.236' },
+            { v: 0.382,  c: '#81c784', n: '0.382' },
+            { v: 0.5,    c: '#ffeb3b', n: '0.5' },
+            { v: 0.618,  c: '#4caf50', n: '0.618' },
+            { v: 0.786,  c: '#00c853', n: '0.786' },
+            { v: 1,      c: '#787b86', n: '1.0 (End)' },
+            { v: 1.618,  c: '#2962ff', n: '1.618' }
+        ];
+
+        function hexToRgba(hex, opacity) {
+            let c;
+            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+                c= hex.substring(1).split('');
+                if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+                c= '0x'+c.join('');
+                return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+opacity+')';
+            }
+            return 'rgba(41, 98, 255, ' + opacity + ')';
+        }
+
+        // Mathematical formula to detect clicks near lines/fibo segments (Pixel-perfect tolerance)
+        function getDistanceToLine(px, py, x1, y1, x2, y2) {
+            let A = px - x1; let B = py - y1; let C = x2 - x1; let D = y2 - y1;
+            let dot = A * C + B * D; let len_sq = C * C + D * D;
+            let param = -1;
+            if (len_sq != 0) param = dot / len_sq;
+            let xx, yy;
+            if (param < 0) { xx = x1; yy = y1; }
+            else if (param > 1) { xx = x2; yy = y2; }
+            else { xx = x1 + param * C; yy = y1 + param * D; }
+            return Math.hypot(px - xx, py - yy);
+        }
+
         function updateAlertTextPosition() {
             if (activeTrendAlert.style.display === 'block' && latestCandlesGlobal.length > 0) {
                 const lastCandle = latestCandlesGlobal[latestCandlesGlobal.length - 1];
                 const xCoordinate = chart.timeScale().timeToCoordinate(lastCandle.time);
-                
                 let targetPrice = currentTrendDir === 'up' ? lastCandle.low : lastCandle.high;
                 const yCoordinate = candleSeries.priceToCoordinate(targetPrice);
                 
                 if (xCoordinate !== null && yCoordinate !== null) {
-                    activeTrendAlert.style.left = (xCoordinate - 42) + 'px'; // စာသားဗဟိုချက်ညှိခြင်း
-                    activeTrendAlert.innerText = 'Trend condition';
-                    
-                    if (currentTrendDir === 'up') {
-                        activeTrendAlert.style.top = (yCoordinate + 36) + 'px'; // အတက်မြား၏ အောက်ဘက်နားတွင်ပြရန်
-                    } else {
-                        activeTrendAlert.style.top = (yCoordinate - 46) + 'px'; // အကျမြား၏ အပေါ်ဘက်နားတွင်ပြရန်
+                    activeTrendAlert.style.left = (xCoordinate - 42) + 'px'; 
+                    if (currentTrendDir === 'up') activeTrendAlert.style.top = (yCoordinate + 36) + 'px';
+                    else activeTrendAlert.style.top = (yCoordinate - 46) + 'px';
+                }
+            }
+        }
+
+        function updateHandlesPosition() {
+            if (!selectedDrawing) {
+                handleA.style.display = 'none'; handleB.style.display = 'none'; return;
+            }
+            const x1 = chart.timeScale().timeToCoordinate(selectedDrawing.start.time);
+            const y1 = candleSeries.priceToCoordinate(selectedDrawing.start.value);
+            const x2 = chart.timeScale().timeToCoordinate(selectedDrawing.end.time);
+            const y2 = candleSeries.priceToCoordinate(selectedDrawing.end.value);
+
+            if (x1 !== null && y1 !== null) {
+                handleA.style.left = x1 + 'px'; handleA.style.top = y1 + 'px'; handleA.style.display = 'block';
+            } else { handleA.style.display = 'none'; }
+
+            if (x2 !== null && y2 !== null) {
+                handleB.style.left = x2 + 'px'; handleB.style.top = y2 + 'px'; handleB.style.display = 'block';
+            } else { handleB.style.display = 'none'; }
+        }
+
+        function renderSVGDrawings() {
+            svgOverlay.innerHTML = ''; 
+
+            drawings.forEach(d => {
+                if (d.type === 'rectangle') {
+                    const x1 = chart.timeScale().timeToCoordinate(d.start.time);
+                    const y1 = candleSeries.priceToCoordinate(d.start.value);
+                    const x2 = chart.timeScale().timeToCoordinate(d.end.time);
+                    const y2 = candleSeries.priceToCoordinate(d.end.value);
+
+                    if (x1 !== null && y1 !== null && x2 !== null && y2 !== null) {
+                        const x = Math.min(x1, x2); const y = Math.min(y1, y2);
+                        const width = Math.abs(x2 - x1); const height = Math.abs(y2 - y1);
+
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x); rect.setAttribute("y", y);
+                        rect.setAttribute("width", width); rect.setAttribute("height", height);
+                        rect.setAttribute("stroke", d.color);
+                        rect.setAttribute("stroke-width", selectedDrawing === d ? "2.5" : "1.5");
+                        rect.setAttribute("fill", d.fillColor);
+                        if (selectedDrawing === d) rect.setAttribute("stroke-dasharray", "4,3");
+                        svgOverlay.appendChild(rect);
                     }
+                }
+            });
+
+            if (isDrawing && currentMode === 'rect' && drawStartPoint && currentMousePos) {
+                const x1 = chart.timeScale().timeToCoordinate(drawStartPoint.time);
+                const y1 = candleSeries.priceToCoordinate(drawStartPoint.value);
+                const x2 = chart.timeScale().timeToCoordinate(currentMousePos.time);
+                const y2 = candleSeries.priceToCoordinate(currentMousePos.value);
+
+                if (x1 !== null && y1 !== null && x2 !== null && y2 !== null) {
+                    const x = Math.min(x1, x2); const y = Math.min(y1, y2);
+                    const width = Math.abs(x2 - x1); const height = Math.abs(y2 - y1);
+                    const colorInput = document.getElementById('shape-color').value;
+                    const opacityInput = document.getElementById('shape-opacity').value;
+                    const liveFill = hexToRgba(colorInput, opacityInput);
+
+                    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    rect.setAttribute("x", x); rect.setAttribute("y", y);
+                    rect.setAttribute("width", width); rect.setAttribute("height", height);
+                    rect.setAttribute("stroke", colorInput); rect.setAttribute("stroke-width", "1.5");
+                    rect.setAttribute("fill", liveFill);
+                    svgOverlay.appendChild(rect);
                 }
             }
         }
 
         chart.timeScale().subscribeVisibleLogicalRangeChange(logicalRange => {
-            updateAlertTextPosition(); 
+            updateAlertTextPosition(); updateHandlesPosition(); renderSVGDrawings(); 
             if (!rsiVisible || isSyncing || !logicalRange) return;
             isSyncing = true;
             try { rsiChart.timeScale().setVisibleLogicalRange(logicalRange); } catch(e){}
             isSyncing = false;
         });
 
-        rsiChart.timeScale().subscribeVisibleLogicalRangeChange(logicalRange => {
-            if (!rsiVisible || isSyncing || !logicalRange) return;
-            isSyncing = true;
-            try { chart.timeScale().setVisibleLogicalRange(logicalRange); } catch(e){}
-            isSyncing = false;
+        function renderDrawing(drawing) {
+            if (drawing.series) chart.removeSeries(drawing.series);
+            if (drawing.priceLines) drawing.priceLines.forEach(pl => drawing.series.removePriceLine(pl));
+            drawing.priceLines = [];
+
+            if (drawing.type === 'draw') {
+                drawing.series = chart.addLineSeries({ color: '#ffeb3b', lineWidth: 2, crosshairMarkerVisible: false });
+                drawing.series.setData([drawing.start, drawing.end].sort((a,b) => a.time - b.time));
+            } 
+            else if (drawing.type === 'fibo') {
+                drawing.series = chart.addLineSeries({ color: '#b2b5be', lineWidth: 1, lineStyle: 1, crosshairMarkerVisible: false });
+                drawing.series.setData([drawing.start, drawing.end].sort((a,b) => a.time - b.time));
+
+                let diff = drawing.end.value - drawing.start.value;
+                fiboLevelsConfig.forEach(lvl => {
+                    let val = drawing.start.value + (diff * lvl.v);
+                    let pl = drawing.series.createPriceLine({
+                        price: val, color: lvl.c, lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: lvl.n
+                    });
+                    drawing.priceLines.push(pl);
+                });
+            }
+        }
+
+        // Global Mouse Move for Drawing Preview
+        mainContainer.addEventListener('mousemove', (e) => {
+            const rect = mainContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let time = chart.timeScale().coordinateToTime(mouseX);
+            let price = candleSeries.coordinateToPrice(mouseY);
+
+            if (!time || price === null) return;
+            currentMousePos = { time, value: price };
+
+            if (isDrawing && drawStartPoint) {
+                if (currentMode === 'rect') {
+                    renderSVGDrawings();
+                } else {
+                    if (!previewSeries) {
+                        previewSeries = chart.addLineSeries({
+                            color: currentMode === 'fibo' ? '#b2b5be' : '#ffeb3b',
+                            lineWidth: currentMode === 'fibo' ? 1 : 2,
+                            lineStyle: currentMode === 'fibo' ? 1 : 0,
+                            crosshairMarkerVisible: false
+                        });
+                    }
+                    previewSeries.setData([drawStartPoint, { time, value: price }].sort((a,b) => a.time - b.time));
+
+                    if (currentMode === 'fibo') {
+                        createdPriceLines.forEach(pl => previewSeries.removePriceLine(pl));
+                        createdPriceLines = [];
+                        let diff = price - drawStartPoint.value; 
+                        fiboLevelsConfig.forEach(lvl => {
+                            let val = drawStartPoint.value + (diff * lvl.v);
+                            let pl = previewSeries.createPriceLine({
+                                price: val, color: lvl.c, lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: lvl.n
+                            });
+                            createdPriceLines.push(pl);
+                        });
+                    }
+                }
+            }
         });
 
-        function resizeCharts() {
-            const w = wrapper.clientWidth;
-            const h = wrapper.clientHeight;
+        // Advanced Object Selection & Drag Initiator on Mouse Down
+        mainContainer.addEventListener('mousedown', (e) => {
+            if (currentMode !== 'pointer') return;
 
-            if (rsiVisible) {
-                const mainH = Math.floor(h * 0.7);
-                const rsiH = h - mainH;
-                mainPane.style.height = mainH + 'px';
-                rsiPane.style.height = rsiH + 'px';
-                chart.resize(w, mainH);
-                rsiChart.resize(w, rsiH);
+            const rect = mainContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let time = chart.timeScale().coordinateToTime(mouseX);
+            let price = candleSeries.coordinateToPrice(mouseY);
+            if (!time || price === null) return;
+
+            let found = null;
+            // Scan top-down from recent drawings
+            for (let i = drawings.length - 1; i >= 0; i--) {
+                let d = drawings[i];
+                let x1 = chart.timeScale().timeToCoordinate(d.start.time);
+                let y1 = candleSeries.priceToCoordinate(d.start.value);
+                let x2 = chart.timeScale().timeToCoordinate(d.end.time);
+                let y2 = candleSeries.priceToCoordinate(d.end.value);
+
+                if (x1 === null || y1 === null || x2 === null || y2 === null) continue;
+
+                if (d.type === 'rectangle') {
+                    let x = Math.min(x1, x2); let y = Math.min(y1, y2);
+                    let w = Math.abs(x2 - x1); let h = Math.abs(y2 - y1);
+                    if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+                        found = d; break;
+                    }
+                } else {
+                    let dist = getDistanceToLine(mouseX, mouseY, x1, y1, x2, y2);
+                    if (dist < 15) { found = d; break; } // 15px Click Tolerance
+                }
+            }
+
+            if (found) {
+                selectedDrawing = found;
+                isDraggingObject = true;
+                draggedDrawing = found;
+                dragStartMouse = { time, value: price };
+                dragStartStart = { ...found.start };
+                dragStartEnd = { ...found.end };
+
+                if (selectedDrawing.type === 'rectangle') {
+                    document.getElementById('shape-color').value = selectedDrawing.color;
+                    document.getElementById('shape-opacity').value = selectedDrawing.opacity;
+                }
+                updateHandlesPosition(); renderSVGDrawings();
+                
+                // Freeze chart scroll to allow flawless dragging
+                chart.applyOptions({ handleScroll: false, handleScale: false });
             } else {
-                mainPane.style.height = h + 'px';
-                rsiPane.style.height = '0px';
-                chart.resize(w, h);
+                selectedDrawing = null; updateHandlesPosition(); renderSVGDrawings();
             }
-            updateAlertTextPosition();
-        }
-        new ResizeObserver(resizeCharts).observe(wrapper);
+        });
 
-        document.getElementById('rsi-btn').onclick = function() {
-            rsiVisible = !rsiVisible;
-            rsiPane.style.display = rsiVisible ? 'block' : 'none';
-            this.classList.toggle('active', rsiVisible);
-            resizeCharts();
-            if (rsiVisible) {
-                setTimeout(() => {
-                    let range = chart.timeScale().getVisibleLogicalRange();
-                    if (range) rsiChart.timeScale().setVisibleLogicalRange(range);
-                }, 10);
-            }
-        };
-
-        document.getElementById('ma-btn').onclick = function() {
-            maVisible = !maVisible;
-            this.classList.toggle('active', maVisible);
-            maSeries.applyOptions({ visible: maVisible });
-        };
-
-        document.getElementById('zoom-in').onclick = () => { 
-            let r = chart.timeScale().getVisibleLogicalRange(); 
-            if (r) { try{ chart.timeScale().setVisibleLogicalRange({ from: r.from + 5, to: r.to - 5 }); updateAlertTextPosition(); }catch(e){} }
-        };
-        document.getElementById('zoom-out').onclick = () => { 
-            let r = chart.timeScale().getVisibleLogicalRange(); 
-            if (r) { try{ chart.timeScale().setVisibleLogicalRange({ from: r.from - 5, to: r.to + 5 }); updateAlertTextPosition(); }catch(e){} }
-        };
-        document.getElementById('zoom-reset').onclick = () => { 
-            chart.timeScale().fitContent(); setTimeout(updateAlertTextPosition, 50);
-        };
-
-        let currentMode = 'pointer'; 
-        let drawings = []; 
-        let drawStartPoint = null;
-
-        document.getElementById('pointer-btn').onclick = () => setMode('pointer');
-        document.getElementById('draw-btn').onclick = () => setMode('draw');
-        document.getElementById('fibo-btn').onclick = () => setMode('fibo');
-        document.getElementById('clear-btn').onclick = () => { drawings.forEach(series => chart.removeSeries(series)); drawings = []; };
-
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('pointer-btn').classList.toggle('active', mode === 'pointer');
-            document.getElementById('draw-btn').classList.toggle('active', mode === 'draw');
-            document.getElementById('fibo-btn').classList.toggle('active', mode === 'fibo');
-            drawStartPoint = null; 
-            chart.applyOptions({ handleScroll: mode === 'pointer', handleScale: mode === 'pointer' });
-        }
-
+        // Click Handler exclusively for generating new drawings
         chart.subscribeClick((param) => {
             if (!param.point || currentMode === 'pointer') return;
             let time = param.time || chart.timeScale().coordinateToTime(param.point.x);
             let price = candleSeries.coordinateToPrice(param.point.y);
             if (!time || price === null) return;
 
-            if (!drawStartPoint) { drawStartPoint = { time, value: price }; } 
-            else {
-                let endPoint = { time, value: price };
-                if (drawStartPoint.time === endPoint.time) return; 
-
-                if (currentMode === 'draw') {
-                    let s = chart.addLineSeries({ color: '#ffeb3b', lineWidth: 2, crosshairMarkerVisible: false });
-                    s.setData([drawStartPoint, endPoint].sort((a,b)=> a.time - b.time));
-                    drawings.push(s);
-                } 
-                else if (currentMode === 'fibo') {
-                    const levels = [ { v: 0, c: '#787b86' }, { v: 0.236, c: '#f44336' }, { v: 0.382, c: '#81c784' }, { v: 0.5, c: '#4caf50' }, { v: 0.618, c: '#009688' }, { v: 0.786, c: '#64b5f6' }, { v: 1, c: '#787b86' } ];
-                    let time1 = Math.min(drawStartPoint.time, endPoint.time);
-                    let time2 = Math.max(drawStartPoint.time, endPoint.time);
-                    let diff = drawStartPoint.value - endPoint.value;
-                    levels.forEach(lvl => {
-                        let val = drawStartPoint.value - (diff * lvl.v);
-                        let s = chart.addLineSeries({ color: lvl.c, lineWidth: 1, lineStyle: 2, crosshairMarkerVisible: false });
-                        s.setData([{ time: time1, value: val }, { time: time2, value: val }]);
-                        drawings.push(s);
-                    });
+            if (currentMode === 'draw' || currentMode === 'fibo' || currentMode === 'rect') {
+                if (!isDrawing) {
+                    isDrawing = true; drawStartPoint = { time, value: price };
+                } else {
+                    isDrawing = false;
+                    if (previewSeries) { chart.removeSeries(previewSeries); previewSeries = null; createdPriceLines = []; }
+                    
+                    if (currentMode === 'rect') {
+                        const colorInput = document.getElementById('shape-color').value;
+                        const opacityInput = document.getElementById('shape-opacity').value;
+                        const finalFill = hexToRgba(colorInput, opacityInput);
+                        let newRect = { id: Date.now(), type: 'rectangle', start: drawStartPoint, end: { time, value: price }, color: colorInput, opacity: opacityInput, fillColor: finalFill };
+                        drawings.push(newRect); selectedDrawing = newRect;
+                    } else {
+                        let newDrawing = { id: Date.now(), type: currentMode, start: drawStartPoint, end: { time, value: price }, series: null, priceLines: [] };
+                        renderDrawing(newDrawing); drawings.push(newDrawing); selectedDrawing = newDrawing;
+                    }
+                    setMode('pointer'); updateHandlesPosition(); renderSVGDrawings();
                 }
-                setMode('pointer'); 
             }
         });
 
-        document.querySelectorAll('.tf-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                currentTimeframe = parseInt(e.target.getAttribute('data-tf'));
-                renderChartData(); 
-            });
+        handleA.addEventListener('mousedown', (e) => { activeHandle = 'A'; e.preventDefault(); e.stopPropagation(); });
+        handleB.addEventListener('mousedown', (e) => { activeHandle = 'B'; e.preventDefault(); e.stopPropagation(); });
+
+        // Window Mouse Move Event Listener for Handling Object & Node Drags
+        window.addEventListener('mousemove', (e) => {
+            const rect = mainContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let time = chart.timeScale().coordinateToTime(mouseX);
+            let price = candleSeries.coordinateToPrice(mouseY);
+            if (!time || price === null) return;
+
+            if (activeHandle && selectedDrawing) {
+                if (activeHandle === 'A') { selectedDrawing.start = { time, value: price }; } 
+                else if (activeHandle === 'B') { selectedDrawing.end = { time, value: price }; }
+                
+                if (selectedDrawing.type === 'rectangle') {
+                    selectedDrawing.fillColor = hexToRgba(selectedDrawing.color, selectedDrawing.opacity);
+                } else {
+                    renderDrawing(selectedDrawing);
+                }
+                updateHandlesPosition(); renderSVGDrawings();
+            } 
+            else if (isDraggingObject && draggedDrawing) {
+                let deltaTime = time - dragStartMouse.time;
+                let deltaPrice = price - dragStartMouse.value;
+
+                draggedDrawing.start = { time: dragStartStart.time + deltaTime, value: dragStartStart.value + deltaPrice };
+                draggedDrawing.end = { time: dragStartEnd.time + deltaTime, value: dragStartEnd.value + deltaPrice };
+
+                if (draggedDrawing.type === 'rectangle') {
+                    draggedDrawing.fillColor = hexToRgba(draggedDrawing.color, draggedDrawing.opacity);
+                } else {
+                    renderDrawing(draggedDrawing);
+                }
+                updateHandlesPosition(); renderSVGDrawings();
+            }
         });
+
+        window.addEventListener('mouseup', () => { 
+            activeHandle = null; 
+            if (isDraggingObject) {
+                isDraggingObject = false; draggedDrawing = null;
+                chart.applyOptions({ handleScroll: currentMode === 'pointer', handleScale: currentMode === 'pointer' });
+            }
+        });
+
+        document.getElementById('shape-color').oninput = function() {
+            if (selectedDrawing && selectedDrawing.type === 'rectangle') {
+                selectedDrawing.color = this.value;
+                selectedDrawing.fillColor = hexToRgba(this.value, selectedDrawing.opacity);
+                renderSVGDrawings();
+            }
+        };
+        document.getElementById('shape-opacity').oninput = function() {
+            if (selectedDrawing && selectedDrawing.type === 'rectangle') {
+                selectedDrawing.opacity = this.value;
+                selectedDrawing.fillColor = hexToRgba(selectedDrawing.color, this.value);
+                renderSVGDrawings();
+            }
+        };
+
+        document.getElementById('clear-btn').onclick = () => {
+            drawings.forEach(d => { if(d.series) chart.removeSeries(d.series); });
+            drawings = []; selectedDrawing = null; updateHandlesPosition(); renderSVGDrawings();
+        };
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('pointer-btn').classList.toggle('active', mode === 'pointer');
+            document.getElementById('draw-btn').classList.toggle('active', mode === 'draw');
+            document.getElementById('fibo-btn').classList.toggle('active', mode === 'fibo');
+            document.getElementById('rect-btn').classList.toggle('active', mode === 'rect');
+            
+            if(isDrawing && previewSeries) { chart.removeSeries(previewSeries); previewSeries = null; isDrawing = false; }
+            if (mode !== 'pointer') { selectedDrawing = null; updateHandlesPosition(); renderSVGDrawings(); }
+            chart.applyOptions({ handleScroll: mode === 'pointer', handleScale: mode === 'pointer' });
+        }
+
+        document.getElementById('pointer-btn').onclick = () => setMode('pointer');
+        document.getElementById('draw-btn').onclick = () => setMode('draw');
+        document.getElementById('fibo-btn').onclick = () => setMode('fibo');
+        document.getElementById('rect-btn').onclick = () => setMode('rect');
+
+        function resizeCharts() {
+            const w = wrapper.clientWidth; const h = wrapper.clientHeight;
+            if (rsiVisible) {
+                const mainH = Math.floor(h * 0.7); const rsiH = h - mainH;
+                mainPane.style.height = mainH + 'px'; rsiPane.style.height = rsiH + 'px';
+                chart.resize(w, mainH); rsiChart.resize(w, rsiH);
+            } else {
+                mainPane.style.height = h + 'px'; rsiPane.style.height = '0px'; chart.resize(w, h);
+            }
+            updateAlertTextPosition(); updateHandlesPosition(); renderSVGDrawings();
+        }
+        new ResizeObserver(resizeCharts).observe(wrapper);
+
+        document.getElementById('rsi-btn').onclick = function() {
+            rsiVisible = !rsiVisible; rsiPane.style.display = rsiVisible ? 'block' : 'none';
+            this.classList.toggle('active', rsiVisible); resizeCharts();
+        };
+
+        document.getElementById('ma-btn').onclick = function() {
+            maVisible = !maVisible; this.classList.toggle('active', maVisible);
+            if(maSeries) maSeries.applyOptions({ visible: maVisible });
+        };
+
+        document.getElementById('zoom-in').onclick = () => { 
+            let r = chart.timeScale().getVisibleLogicalRange(); 
+            if (r) { try{ chart.timeScale().setVisibleLogicalRange({ from: r.from + 5, to: r.to - 5 }); }catch(e){} }
+        };
+        document.getElementById('zoom-out').onclick = () => { 
+            let r = chart.timeScale().getVisibleLogicalRange(); 
+            if (r) { try{ chart.timeScale().setVisibleLogicalRange({ from: r.from - 5, to: r.to + 5 }); }catch(e){} }
+        };
+        document.getElementById('zoom-reset').onclick = () => { chart.timeScale().fitContent(); };
 
         function calculateSMA(data, period) {
             let smaData = [];
             for (let i = 0; i < data.length; i++) {
                 let smaPoint = { time: data[i].time };
                 if (i >= period - 1) {
-                    let sum = 0;
-                    for (let j = 0; j < period; j++) { sum += data[i - j].close; }
+                    let sum = 0; for (let j = 0; j < period; j++) { sum += data[i - j].close; }
                     smaPoint.value = sum / period;
                 }
                 smaData.push(smaPoint);
@@ -346,18 +619,15 @@
                 let rsiPoint = { time: data[i].time }; 
                 if (i > 0) {
                     let change = data[i].close - data[i-1].close;
-                    if (i < period) {
-                        gains += Math.max(0, change); losses += Math.max(0, -change);
-                    } else if (i === period) {
+                    if (i < period) { gains += Math.max(0, change); losses += Math.max(0, -change); } 
+                    else if (i === period) {
                         gains += Math.max(0, change); losses += Math.max(0, -change);
                         let rs = (losses / period) === 0 ? 100 : (gains / period) / (losses / period);
                         rsiPoint.value = 100 - (100 / (1 + rs));
                     } else {
                         let gain = Math.max(0, change); let loss = Math.max(0, -change);
-                        gains = (gains * (period - 1) + gain) / period;
-                        losses = (losses * (period - 1) + loss) / period;
-                        let rs = losses === 0 ? 100 : gains / losses;
-                        rsiPoint.value = 100 - (100 / (1 + rs));
+                        gains = (gains * (period - 1) + gain) / period; losses = (losses * (period - 1) + loss) / period;
+                        let rs = losses === 0 ? 100 : gains / losses; rsiPoint.value = 100 - (100 / (1 + rs));
                     }
                 }
                 rsiData.push(rsiPoint);
@@ -379,44 +649,24 @@
 
         function checkTrendCondition(finalCandles) {
             if (finalCandles.length < 3) return { trigger: false, dir: '' };
-            
-            let c1 = finalCandles[finalCandles.length - 1];
-            let c2 = finalCandles[finalCandles.length - 2];
-            let c3 = finalCandles[finalCandles.length - 3];
-
+            let c1 = finalCandles[finalCandles.length - 1], c2 = finalCandles[finalCandles.length - 2], c3 = finalCandles[finalCandles.length - 3];
             let isBull3 = (c1.close > c1.open) && (c2.close > c2.open) && (c3.close > c3.open);
             let isBear3 = (c1.close < c1.open) && (c2.close < c2.open) && (c3.close < c3.open);
-
             if (isBull3) {
-                if (finalCandles.length >= 4) {
-                    let c4 = finalCandles[finalCandles.length - 4];
-                    if (c4.close > c4.open) return { trigger: false, dir: '' };
-                }
+                if (finalCandles.length >= 4 && finalCandles[finalCandles.length - 4].close > finalCandles[finalCandles.length - 4].open) return { trigger: false, dir: '' };
                 return { trigger: true, dir: 'up' };
             }
-
             if (isBear3) {
-                if (finalCandles.length >= 4) {
-                    let c4 = finalCandles[finalCandles.length - 4];
-                    if (c4.close < c4.open) return { trigger: false, dir: '' };
-                }
+                if (finalCandles.length >= 4 && finalCandles[finalCandles.length - 4].close < finalCandles[finalCandles.length - 4].open) return { trigger: false, dir: '' };
                 return { trigger: true, dir: 'down' };
             }
-
             return { trigger: false, dir: '' };
         }
 
-        // 🟢 ပြင်ဆင်ထားသောနေရာ: စာသားသက်သက်ကိုသာ ၆၀ စကန့်ပြပြီး ပျောက်သွားစေသည့် စနစ်
         function triggerFlashingAlert() {
-            activeTrendAlert.style.display = 'block'; 
-            updateAlertTextPosition();
-
+            activeTrendAlert.style.display = 'block'; updateAlertTextPosition();
             if (alertTimeout) clearTimeout(alertTimeout); 
-
-            alertTimeout = setTimeout(() => {
-                activeTrendAlert.style.display = 'none'; // ၆၀ စကန့်ပြည့်လျှင် စာသားသာ ပျောက်သွားမည်။ မြားမှာ ပုံသေကျန်ခဲ့မည်။
-                alertTimeout = null;
-            }, 60000); 
+            alertTimeout = setTimeout(() => { activeTrendAlert.style.display = 'none'; alertTimeout = null; }, 60000); 
         }
 
         function renderChartData() {
@@ -427,97 +677,59 @@
             sortedRaw.forEach(item => {
                 let open = runningPrice;
                 let close = item["B/S"] === "B" ? open + 1 : (item["B/S"] === "S" ? open - 1 : open);
-                if (open === close) return; 
-                runningPrice = close;
+                if (open === close) return; runningPrice = close;
                 let bucketTime = Math.floor(item.parsedTime / currentTimeframe) * currentTimeframe;
 
                 if (!aggregated.has(bucketTime)) {
                     aggregated.set(bucketTime, { time: bucketTime, open: open, high: Math.max(open, close), low: Math.min(open, close), close: close });
                 } else {
-                    let c = aggregated.get(bucketTime);
-                    c.high = Math.max(c.high, Math.max(open, close));
-                    c.low = Math.min(c.low, Math.min(open, close));
-                    c.close = close; 
+                    let c = aggregated.get(bucketTime); c.high = Math.max(c.high, Math.max(open, close)); c.low = Math.min(c.low, Math.min(open, close)); c.close = close; 
                 }
             });
 
             let finalCandles = Array.from(aggregated.values()).map(c => ({ time: c.time, open: c.open, high: c.high + 0.2, low: c.low - 0.2, close: c.close }));
-            latestCandlesGlobal = finalCandles; 
-            candleSeries.setData(finalCandles);
+            latestCandlesGlobal = finalCandles; candleSeries.setData(finalCandles);
             
             if (finalCandles.length > 0) {
                 let indicators = calculateRSIAndSMA(finalCandles, 14, 14);
-                rsiSeries.setData(indicators.rsiData);
-                rsiSignalSeries.setData(indicators.smaData);
+                rsiSeries.setData(indicators.rsiData); rsiSignalSeries.setData(indicators.smaData);
+                if (maSeries) { let mainSMA = calculateSMA(finalCandles, 50); maSeries.setData(mainSMA); }
 
-                let mainSMA = calculateSMA(finalCandles, 50); 
-                maSeries.setData(mainSMA);
+                let markers = []; let macroLastHigh = null; let macroLastLow = null;
+                let lastHighPrice = null; let lastLowPrice = null; let lastStructureType = ''; 
 
-                let markers = [];
-                let macroLastHigh = null;
-                let macroLastLow = null;
-                
-                let lastHighPrice = null;
-                let lastLowPrice = null;
-                let lastStructureType = ''; 
-
-                // H/L Marker Structure Loop
                 for (let i = 1; i < finalCandles.length - 1; i++) {
-                    let prev = finalCandles[i-1];
-                    let curr = finalCandles[i];
-                    let next = finalCandles[i+1];
-
+                    let prev = finalCandles[i-1], curr = finalCandles[i], next = finalCandles[i+1];
                     if (curr.high >= prev.high && curr.high >= next.high) {
-                        let bCount = 0; let idx = i;
-                        while (idx >= 0 && finalCandles[idx].close > finalCandles[idx].open) { bCount++; idx--; }
-                        if (bCount >= 2) {
-                            if (!(lastStructureType === 'H' && curr.high === lastHighPrice)) {
-                                let text = 'H';
-                                if (macroLastHigh !== null) text = curr.high > macroLastHigh ? 'HH' : 'LH';
-                                markers.push({ time: curr.time, position: 'aboveBar', color: text === 'HH' ? '#ffeb3b' : '#ff9800', shape: 'arrowDown', text: text });
-                                macroLastHigh = curr.high; lastHighPrice = curr.high; lastStructureType = 'H';
-                            }
+                        let bCount = 0; let idx = i; while (idx >= 0 && finalCandles[idx].close > finalCandles[idx].open) { bCount++; idx--; }
+                        if (bCount >= 2 && !(lastStructureType === 'H' && curr.high === lastHighPrice)) {
+                            let text = 'H'; if (macroLastHigh !== null) text = curr.high > macroLastHigh ? 'HH' : 'LH';
+                            markers.push({ time: curr.time, position: 'aboveBar', color: text === 'HH' ? '#ffeb3b' : '#ff9800', shape: 'arrowDown', text: text });
+                            macroLastHigh = curr.high; lastHighPrice = curr.high; lastStructureType = 'H';
                         }
                     }
-
                     if (curr.low <= prev.low && curr.low <= next.low) {
-                        let sCount = 0; let idx = i;
-                        while (idx >= 0 && finalCandles[idx].close < finalCandles[idx].open) { sCount++; idx--; }
-                        if (sCount >= 2) {
-                            if (!(lastStructureType === 'L' && curr.low === lastLowPrice)) {
-                                let text = 'L';
-                                if (macroLastLow !== null) text = curr.low < macroLastLow ? 'LL' : 'HL';
-                                markers.push({ time: curr.time, position: 'belowBar', color: text === 'LL' ? '#ef5350' : '#00e676', shape: 'arrowUp', text: text });
-                                macroLastLow = curr.low; lastLowPrice = curr.low; lastStructureType = 'L';
-                            }
+                        let sCount = 0; let idx = i; while (idx >= 0 && finalCandles[idx].close < finalCandles[idx].open) { sCount++; idx--; }
+                        if (sCount >= 2 && !(lastStructureType === 'L' && curr.low === lastLowPrice)) {
+                            let text = 'L'; if (macroLastLow !== null) text = curr.low < macroLastLow ? 'LL' : 'HL';
+                            markers.push({ time: curr.time, position: 'belowBar', color: text === 'LL' ? '#ef5350' : '#00e676', shape: 'arrowUp', text: text });
+                            macroLastLow = curr.low; lastLowPrice = curr.low; lastStructureType = 'L';
                         }
                     }
                 }
 
-                // 🟢 Trend Alert Trigger တွက်ချက်ခြင်းနှင့် Marker အဖြစ်ထည့်သွင်းခြင်း
                 let trendRes = checkTrendCondition(finalCandles);
                 let latestCandle = finalCandles[finalCandles.length - 1];
                 if (trendRes.trigger) {
-                    currentTrendDir = trendRes.dir; 
-                    alertMarkersMap.set(latestCandle.time, trendRes.dir); // Persistent Map ထဲမှတ်သားထားခြင်း
-                    triggerFlashingAlert();
-                } else {
-                    updateAlertTextPosition(); 
-                }
+                    currentTrendDir = trendRes.dir; alertMarkersMap.set(latestCandle.time, trendRes.dir); triggerFlashingAlert();
+                } else { updateAlertTextPosition(); }
 
-                // 🟢 မှတ်သားထားဖူးသမျှ အချက်ပြမြားဖြူအားလုံးကို Native Chart Markers ထဲသို့ ထည့်သွင်းခြင်း (ပုံသေကျန်စေရန်)
                 alertMarkersMap.forEach((dir, alertTime) => {
-                    markers.push({
-                        time: alertTime,
-                        position: dir === 'up' ? 'belowBar' : 'aboveBar',
-                        color: '#ffffff', // အဖြူရောင်စစ်စစ်
-                        shape: dir === 'up' ? 'arrowUp' : 'arrowDown', // HL ကဲ့သို့ တြိဂံမြားပိတ်
-                        text: '' // စာသားမပါဝင်ပါ
-                    });
+                    markers.push({ time: alertTime, position: dir === 'up' ? 'belowBar' : 'aboveBar', color: '#ffffff', shape: dir === 'up' ? 'arrowUp' : 'arrowDown', text: '' });
                 });
                 
-                markers.sort((a, b) => a.time - b.time);
-                candleSeries.setMarkers(markers);
+                markers.sort((a, b) => a.time - b.time); candleSeries.setMarkers(markers);
+                updateHandlesPosition(); renderSVGDrawings();
             }
         }
 
@@ -527,7 +739,6 @@
             try {
                 let response = await fetch(targetUrl).catch(() => fetch(proxyUrl));
                 let rawJson = await response.json();
-                
                 let latestIssueStr = ""; let maxTime = 0;
 
                 rawJson.forEach(item => {
@@ -547,22 +758,24 @@
                         document.getElementById('next-issue').innerText = shortIssue + 1; 
                     }
                 }
-
-                document.getElementById('loading-screen').style.display = 'none';
-                renderChartData(); 
-                
-                const badge = document.getElementById('status-badge');
-                badge.innerText = '● Live Updated'; badge.style.color = '#00e676';
+                document.getElementById('loading-screen').style.display = 'none'; renderChartData(); 
+                const badge = document.getElementById('status-badge'); badge.innerText = '● Live Updated'; badge.style.color = '#00e676';
             } catch (err) {
-                const badge = document.getElementById('status-badge');
-                badge.innerText = '● Connection Error'; badge.style.color = '#ef5350';
+                const badge = document.getElementById('status-badge'); badge.innerText = '● Connection Error'; badge.style.color = '#ef5350';
             }
         }
 
+        document.querySelectorAll('.tf-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active'); currentTimeframe = parseInt(e.target.getAttribute('data-tf'));
+                renderChartData(); 
+            });
+        });
+
         fetchMarketData(); 
         setInterval(() => {
-            let now = new Date();
-            let sec = 60 - now.getSeconds();
+            let now = new Date(); let sec = 60 - now.getSeconds();
             if(now.getSeconds() === 1) fetchMarketData();
             document.getElementById('timer-text').innerText = `${sec === 60 ? 0 : sec}s`;
         }, 1000);
